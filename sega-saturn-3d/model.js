@@ -102,43 +102,59 @@
   }
 
   // Heightfield mesh of the upper shell: rounded edges, sloped front, and a
-  // sunken well where the CD lid sits. Grid vertices just outside the footprint
-  // are snapped onto its outline at y = 0, which forms the vertical outer wall;
-  // vertices on either side of the well outline are snapped onto it too, so the
-  // opening is a clean curve with a small filleted lip rather than a staircase.
+  // sunken well (with a small filleted lip) where the CD lid sits. Grid
+  // vertices next to the outer outline and the well outline are snapped onto
+  // those outlines, which turns the height jump into clean vertical walls.
+  // Normals come from the analytic height function rather than the triangles,
+  // so the irregular boundary triangles never show up as shading noise.
   function buildShellGeometry() {
-    const { W, D, cornerR, well } = DIM;
+    const { W, D, cornerR, well, edgeR } = DIM;
     const m = 0.4, nx = 190, nz = 170;
     const x0 = -W / 2 - m, x1 = W / 2 + m, z0 = -D / 2 - m, z1 = D / 2 + m;
     const cell = Math.max((x1 - x0) / nx, (z1 - z0) / nz), band = cell * 1.5, lipR = 0.55;
     const floorY = DIM.shellTop - well.depth;
     const outer = (x, z) => sdRR(x, z, W / 2, D / 2, cornerR);
     const inner = (x, z) => sdRR(x - well.x, z - well.z, well.w / 2, well.d / 2, well.r);
-    const snap = (x, z, sdf, d) => {           // move (x, z) onto the sdf's zero contour
+    const grad = (sdf, x, z) => {
       const e = 1e-3;
-      const gx = (sdf(x + e, z) - sdf(x - e, z)) / (2 * e), gz = (sdf(x, z + e) - sdf(x, z - e)) / (2 * e);
-      return [x - d * gx, z - d * gz];
+      return [(sdf(x + e, z) - sdf(x - e, z)) / (2 * e), (sdf(x, z + e) - sdf(x, z - e)) / (2 * e)];
     };
-    const pos = new Float32Array((nx + 1) * (nz + 1) * 3);
+    // Height of the top surface away from the walls.
+    const height = (x, z) => {
+      const dw = inner(x, z);
+      if (dw < 0) return floorY;
+      const t = shellY(x, z);
+      return dw < lipR ? t - lipR + Math.sqrt(Math.max(0, lipR * lipR - (lipR - dw) * (lipR - dw))) : t;
+    };
+    const count = (nx + 1) * (nz + 1);
+    const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3);
     let k = 0;
     for (let j = 0; j <= nz; j++) {
       for (let i = 0; i <= nx; i++) {
-        let x = x0 + (x1 - x0) * i / nx, z = z0 + (z1 - z0) * j / nz, y;
+        let x = x0 + (x1 - x0) * i / nx, z = z0 + (z1 - z0) * j / nz, y, n;
         const d = outer(x, z);
-        if (d > 0) {
-          [x, z] = snap(x, z, outer, d); y = 0;
+        if (d > -band) {                                    // outer wall
+          const [gx, gz] = grad(outer, x, z);
+          x -= d * gx; z -= d * gz;
+          y = d > 0 ? 0 : topY(z) - edgeR;
+          n = [gx, 0, gz];
         } else {
           const dw = inner(x, z);
-          if (dw < 0) {
-            if (dw > -band) [x, z] = snap(x, z, inner, dw);
-            y = floorY;
-          } else {
-            if (dw < band) [x, z] = snap(x, z, inner, dw);
-            const t = shellY(x, z), dl = Math.min(dw, lipR);
-            y = dw < lipR ? t - lipR + Math.sqrt(Math.max(0, lipR * lipR - (lipR - dl) * (lipR - dl))) : t;
+          if (dw > -band && dw < band) {                    // well wall
+            const [gx, gz] = grad(inner, x, z);
+            x -= dw * gx; z -= dw * gz;
+            y = dw < 0 ? floorY : shellY(x, z) - lipR;
+            n = [-gx, 0, -gz];
+          } else {                                          // top, band, lip or floor
+            y = height(x, z);
+            const h = 0.02;
+            n = [-(height(x + h, z) - height(x - h, z)) / (2 * h), 1, -(height(x, z + h) - height(x, z - h)) / (2 * h)];
           }
         }
-        pos[k++] = x; pos[k++] = y; pos[k++] = z;
+        const len = Math.hypot(n[0], n[1], n[2]) || 1;
+        pos[k] = x; pos[k + 1] = y; pos[k + 2] = z;
+        nrm[k] = n[0] / len; nrm[k + 1] = n[1] / len; nrm[k + 2] = n[2] / len;
+        k += 3;
       }
     }
     const idx = new Uint32Array(nx * nz * 6);
@@ -150,10 +166,10 @@
         idx[q++] = b; idx[q++] = c; idx[q++] = d2;
       }
     }
-    let g = new T.BufferGeometry();
+    const g = new T.BufferGeometry();
     g.setAttribute('position', new T.BufferAttribute(pos, 3));
+    g.setAttribute('normal', new T.BufferAttribute(nrm, 3));
     g.setIndex(new T.BufferAttribute(idx, 1));
-    g = T.BufferGeometryUtils.toCreasedNormals(g, Math.PI / 3);
     g.computeBoundingSphere();
     return g;
   }
@@ -211,7 +227,7 @@
   /* ------------------------------------------------------------ materials */
   const VARIANTS = {
     black:    { name: 'Black · NA/EU Model 1', shell: 0x14141a, base: 0x0e0e12, lid: 0x15151b, button: 0x1c1c22, trim: 0x25262c, label: '#eef0f4', glass: 0 },
-    grey:     { name: 'Grey · Japanese Model 1', shell: 0xb7bac2, base: 0xa4a7af, lid: 0xbcbfc7, button: 0x3a55b0, trim: 0x8c9099, label: '#262b3d', glass: 0 },
+    grey:     { name: 'Grey · Japanese Model 1', shell: 0x969aa3, base: 0x868a93, lid: 0x9ca0a9, button: 0x3a55b0, trim: 0x767a83, label: '#262b3d', glass: 0 },
     skeleton: { name: 'Skeleton · "This is Cool"', shell: 0x9aa3b4, base: 0x8b94a5, lid: 0xa3acbd, button: 0x6d7a95, trim: 0x59606e, label: '#f2f4f8', glass: 1 },
   };
 
@@ -219,7 +235,7 @@
     const M = {};
     M.shell = new T.MeshPhysicalMaterial({ color: 0x14141a, roughness: 0.46, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.32, envMapIntensity: 0.9 });
     M.lid = new T.MeshPhysicalMaterial({ color: 0x15151b, roughness: 0.38, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.25, envMapIntensity: 1.0 });
-    M.base = new T.MeshStandardMaterial({ color: 0x0e0e12, roughness: 0.74, metalness: 0, envMapIntensity: 0.6 });
+    M.base = new T.MeshPhysicalMaterial({ color: 0x0e0e12, roughness: 0.74, metalness: 0, envMapIntensity: 0.6 });  // physical so it can go translucent
     M.button = new T.MeshPhysicalMaterial({ color: 0x1c1c22, roughness: 0.5, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.4 });
     M.trim = new T.MeshStandardMaterial({ color: 0x25262c, roughness: 0.62, metalness: 0.05 });
     M.recess = new T.MeshStandardMaterial({ color: 0x050507, roughness: 0.96, metalness: 0 });

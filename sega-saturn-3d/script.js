@@ -17,7 +17,7 @@
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.shadowMap.type = T.PCFShadowMap;
 
   const scene = new T.Scene();
   scene.background = new T.Color(0x090a0f);
@@ -97,8 +97,11 @@
   function focusHotspot(h) {
     h.anchor.getWorldPosition(_wp); h.anchor.parent.getWorldQuaternion(_q);
     _n.copy(h.normal).applyQuaternion(_q);
-    const dir = _n.clone().add(new T.Vector3(0, 0.6, 0)).normalize();
-    tweenTo(_wp.clone().addScaledVector(dir, 22), _wp.clone());
+    // Look along the part's normal, lifted a little and biased toward where the
+    // camera already is, so top-facing parts are never viewed straight down.
+    const toCam = camera.position.clone().sub(_wp).normalize();
+    const dir = _n.clone().add(new T.Vector3(0, 0.55, 0)).addScaledVector(toCam, 0.9).normalize();
+    tweenTo(_wp.clone().addScaledVector(dir, 36), _wp.clone());
     $('.card__title', card).textContent = h.title;
     $('.card__body', card).textContent = h.body;
     card.hidden = false;
@@ -206,14 +209,17 @@
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
-      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false); camera.aspect = w / h;
+      camera.fov = camera.aspect < 1 ? Math.min(62, 34 / Math.max(camera.aspect, 0.5)) : 34;  // portrait: widen
+      camera.updateProjectionMatrix();
     }
   }
-  const clock = new T.Clock();
+  const timer = new T.Timer();
   function frame() {
     requestAnimationFrame(frame);
     resize();
-    const dt = Math.min(clock.getDelta(), 0.05), now = performance.now() / 1000;
+    timer.update();
+    const dt = Math.min(timer.getDelta(), 0.05), now = performance.now() / 1000;
 
     if (state.intro < 1) {
       state.intro = Math.min(1, state.intro + dt / 1.6);
