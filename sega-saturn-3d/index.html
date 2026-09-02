@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sega Saturn — Interactive 3D Model</title>
+  <meta name="description" content="A procedurally built, interactive 3D model of the 1995 Sega Saturn (Model 1). Orbit it, power it on, pop the CD lid, explode the parts, and read the spec sheet.">
+  <meta property="og:title" content="Sega Saturn — Interactive 3D Model">
+  <meta property="og:description" content="Orbit, power on, open the lid, and explode a 3D Sega Saturn built entirely from code.">
+  <meta name="theme-color" content="#090a0f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%236b8cff'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='8' fill='none' stroke='%23c9b6ff' stroke-width='5' transform='rotate(-18 32 32)'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,500;0,700;0,800;0,900;1,700;1,800;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#panel">Skip to controls</a>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__mark">SEGA SATURN</div>
+    <div class="loader__bar"><span></span></div>
+    <div class="loader__note">Building console geometry…</div>
+  </div>
+
+  <canvas id="scene" aria-label="Interactive 3D model of a Sega Saturn console. Drag to orbit, scroll to zoom. Click the console's buttons to power it on or open the lid." role="img"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="hotspots" id="hotspots" aria-label="Points of interest on the console"></div>
+
+  <header class="brand">
+    <p class="brand__eyebrow"><span class="brand__ring" aria-hidden="true"></span>1995 · Model 1 · HST-3200</p>
+    <h1 class="brand__title">SEGA<br>SATURN</h1>
+    <p class="brand__sub">A 3D model built from code, no downloads. Drag to orbit, scroll to zoom, and click the buttons on the console itself.</p>
+  </header>
+
+  <aside class="card" id="card" hidden aria-live="polite">
+    <button class="card__close" type="button" aria-label="Close">×</button>
+    <h2 class="card__title"></h2>
+    <p class="card__body"></p>
+  </aside>
+
+  <button class="panel-toggle" id="panelToggle" type="button" aria-controls="panel" aria-expanded="false">
+    <span class="panel-toggle__icon" aria-hidden="true"></span> Controls
+  </button>
+
+  <aside class="panel" id="panel" aria-label="Model controls">
+    <section class="panel__section">
+      <h2 class="panel__heading">Console</h2>
+      <div class="console-ctl">
+        <button class="btn btn--oval" id="btnPower" type="button" aria-pressed="false" title="Toggle power (P)">
+          <span class="btn__text">Power</span>
+        </button>
+        <button class="btn btn--pill" id="btnReset" type="button" title="Reset">
+          <span class="btn__text">Reset</span>
+        </button>
+        <button class="btn btn--oval" id="btnOpen" type="button" aria-pressed="false" title="Open or close the CD lid (O)">
+          <span class="btn__text">Open lid</span>
+        </button>
+      </div>
+      <div class="leds">
+        <span class="led led--green" id="ledPower"></span><span class="leds__label">POWER</span>
+        <span class="led led--red" id="ledAccess"></span><span class="leds__label">ACCESS</span>
+      </div>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">View</h2>
+      <div class="chips">
+        <button class="chip" type="button" data-view="hero">Hero</button>
+        <button class="chip" type="button" data-view="front">Front</button>
+        <button class="chip" type="button" data-view="top">Top</button>
+        <button class="chip" type="button" data-view="rear">Rear</button>
+        <button class="chip" type="button" data-view="ports">Ports</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="autoRotate"><span class="toggle__track"></span>Auto-rotate</label>
+      <label class="toggle"><input type="checkbox" id="wireframe"><span class="toggle__track"></span>Wireframe</label>
+      <label class="toggle"><input type="checkbox" id="hotspotsToggle" checked><span class="toggle__track"></span>Show hotspots</label>
+      <label class="range" for="explode"><span>Exploded view</span>
+        <input type="range" id="explode" min="0" max="100" value="0" step="1">
+      </label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Finish</h2>
+      <div class="finishes">
+        <label class="finish"><input type="radio" name="finish" value="black" checked><span class="finish__swatch" style="--sw:#15151b"></span>Black<small>NA / EU</small></label>
+        <label class="finish"><input type="radio" name="finish" value="grey"><span class="finish__swatch" style="--sw:#b7bac2"></span>Grey<small>Japan</small></label>
+        <label class="finish"><input type="radio" name="finish" value="skeleton"><span class="finish__swatch finish__swatch--glass" style="--sw:#9aa3b4"></span>Skeleton<small>“This is cool”</small></label>
+      </div>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Guide</h2>
+      <ol class="guide" id="guideList"></ol>
+    </section>
+
+    <section class="panel__section">
+      <details class="specs">
+        <summary class="panel__heading panel__heading--summary">Spec sheet</summary>
+        <dl class="specs__list">
+          <dt>Released</dt><dd>22 Nov 1994 (JP) · 11 May 1995 (NA) · 8 Jul 1995 (EU)</dd>
+          <dt>Launch price</dt><dd>¥44,800 · US$399 · £399</dd>
+          <dt>CPU</dt><dd>2 × Hitachi SH-2, 32-bit RISC @ 28.6 MHz</dd>
+          <dt>Video</dt><dd>VDP1 (sprites & polygons) + VDP2 (backgrounds), 320×224 up to 704×480</dd>
+          <dt>Sound</dt><dd>Yamaha SCSP, 32 channels · Motorola 68EC000 @ 11.3 MHz</dd>
+          <dt>Memory</dt><dd>2 MB work RAM · 1.5 MB VRAM · 512 KB sound RAM · 512 KB CD buffer</dd>
+          <dt>Media</dt><dd>Double-speed CD-ROM · cartridge slot for RAM expansion and backup memory</dd>
+          <dt>Ports</dt><dd>2 controller ports · A/V multi out · communication connector</dd>
+          <dt>Size</dt><dd>260 × 230 × 83 mm</dd>
+          <dt>Sold</dt><dd>≈ 9.26 million worldwide</dd>
+        </dl>
+      </details>
+    </section>
+  </aside>
+
+  <footer class="hint" aria-hidden="true">
+    <span><b>Drag</b> orbit</span><span><b>Scroll</b> zoom</span><span><b>P</b> power</span><span><b>O</b> lid</span><span><b>E</b> explode</span><span><b>R</b> reset view</span>
+  </footer>
+
+  <script src="vendor/three.bundle.min.js"></script>
+  <script src="model.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
