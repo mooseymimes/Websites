@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Water — Ocean Wave Simulator</title>
+  <meta name="description" content="A real-time ocean built from Gerstner waves: a procedural sky and sun, glitter, whitecaps, and barrels you can drop into the water and watch float, drift and collide.">
+  <meta property="og:title" content="Open Water — Ocean Wave Simulator">
+  <meta property="og:description" content="Drop barrels into a living sea. Gerstner waves, a procedural sky, sun glitter, foam and rigid-body buoyancy, all in the browser.">
+  <meta name="theme-color" content="#06111a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2306111a'/%3E%3Ccircle cx='46' cy='18' r='7' fill='%23ffb347'/%3E%3Cpath d='M4 40c8-8 16-8 24 0s16 8 24 0l8-6v24H4z' fill='%2335c6d9'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#panel">Skip to controls</a>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__mark">OPEN WATER</div>
+    <div class="loader__bar"><span></span></div>
+    <div class="loader__note">Filling the ocean…</div>
+  </div>
+
+  <canvas id="scene" role="img" aria-label="Interactive ocean simulation. Click the water to drop a barrel. Drag to orbit, scroll to zoom, right-drag to pan."></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="brand">
+    <p class="brand__eyebrow"><span class="brand__wave" aria-hidden="true"></span>Waves · buoyancy · procedural sky</p>
+    <h1 class="brand__title">OPEN<br>WATER</h1>
+    <p class="brand__sub">Click anywhere on the sea to drop a barrel. Drag to look around, scroll to zoom, right-drag to pan.</p>
+  </header>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <button class="panel-toggle" id="panelToggle" type="button" aria-controls="panel" aria-expanded="false">
+    <span class="panel-toggle__icon" aria-hidden="true"></span> Controls
+  </button>
+
+  <aside class="panel" id="panel" aria-label="Simulator controls">
+    <section class="panel__section">
+      <h2 class="panel__heading">Barrels <span class="panel__count"><b id="countValue">0</b> afloat</span></h2>
+      <div class="drop-ctl">
+        <button class="btn btn--primary" id="btnDrop" type="button" title="Drop a barrel (Space)">Drop barrel</button>
+        <button class="btn" id="btnDrop10" type="button" title="Drop ten barrels (B)">×10</button>
+        <button class="btn btn--ghost" id="btnClear" type="button" title="Remove every barrel (C)">Clear</button>
+      </div>
+      <div class="kinds">
+        <label class="kind"><input type="radio" name="kind" value="cask" checked><span class="kind__swatch kind__swatch--cask"></span>Cask<small>oak</small></label>
+        <label class="kind"><input type="radio" name="kind" value="drum"><span class="kind__swatch kind__swatch--drum"></span>Drum<small>steel</small></label>
+        <label class="kind"><input type="radio" name="kind" value="mixed"><span class="kind__swatch kind__swatch--mixed"></span>Mixed<small>both</small></label>
+      </div>
+      <label class="range" for="fill"><span>Cargo <em id="fillValue">45% full</em></span>
+        <input type="range" id="fill" min="10" max="92" value="45" step="1">
+      </label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Sea</h2>
+      <label class="range" for="sea"><span>Sea state <em id="seaValue">moderate</em></span>
+        <input type="range" id="sea" min="0" max="100" value="45" step="1">
+      </label>
+      <label class="range" for="chop"><span>Choppiness</span>
+        <input type="range" id="chop" min="0" max="100" value="65" step="1">
+      </label>
+      <label class="range" for="wind"><span>Wind direction <em id="windValue">40° NE</em></span>
+        <input type="range" id="wind" min="0" max="359" value="40" step="1">
+      </label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Light</h2>
+      <label class="range" for="time"><span>Time of day <em id="timeValue">18:24</em></span>
+        <input type="range" id="time" min="5" max="20" value="18.4" step="0.05">
+      </label>
+      <label class="range" for="clouds"><span>Cloud cover</span>
+        <input type="range" id="clouds" min="0" max="100" value="35" step="1">
+      </label>
+      <label class="toggle"><input type="checkbox" id="bloom" checked><span class="toggle__track"></span>Bloom</label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">View</h2>
+      <div class="chips">
+        <button class="chip" type="button" data-view="default">Reset</button>
+        <button class="chip" type="button" data-view="deck">Deck</button>
+        <button class="chip" type="button" data-view="aerial">Aerial</button>
+        <button class="chip" type="button" data-view="sunward">Into the sun</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="follow"><span class="toggle__track"></span>Follow the barrels</label>
+      <label class="toggle"><input type="checkbox" id="wireframe"><span class="toggle__track"></span>Wireframe</label>
+      <label class="toggle"><input type="checkbox" id="sound"><span class="toggle__track"></span>Sound</label>
+    </section>
+
+    <section class="panel__section">
+      <details class="about">
+        <summary class="panel__heading panel__heading--summary">How it works</summary>
+        <dl class="about__list">
+          <dt>Waves</dt><dd>Eight Gerstner waves, from a long swell down to short chop, evaluated on the GPU for the surface and again on the CPU for physics, so barrels ride exactly what you see.</dd>
+          <dt>Light</dt><dd>An analytic sky (sun, haze, clouds, stars) reflected with Fresnel, a tight sun-glitter lobe, light scattered through the crests, and horizon fog. Barrels are lit by an environment map baked from the same sky.</dd>
+          <dt>Foam</dt><dd>Whitecaps come from the Jacobian of the wave displacement. Splashes and wakes are painted into a top-down foam texture that slowly fades.</dd>
+          <dt>Barrels</dt><dd>Rigid bodies with buoyancy sampled at fourteen points on the hull, water and air drag, orbital wave velocity, wind drift and capsule collisions.</dd>
+        </dl>
+      </details>
+    </section>
+  </aside>
+
+  <footer class="hint" aria-hidden="true">
+    <span><b>Click</b> drop</span><span><b>Drag</b> orbit</span><span><b>Right-drag</b> pan</span><span><b>Scroll</b> zoom</span><span><b>Space</b> drop</span><span><b>B</b> ×10</span><span><b>C</b> clear</span><span><b>F</b> follow</span><span><b>1–3</b> views</span>
+  </footer>
+  <div class="stats" aria-hidden="true"><b id="fpsValue">0</b> fps</div>
+
+  <script src="vendor/three.bundle.min.js"></script>
+  <script src="waves.js"></script>
+  <script src="sky.js"></script>
+  <script src="ocean.js"></script>
+  <script src="barrels.js"></script>
+  <script src="audio.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
