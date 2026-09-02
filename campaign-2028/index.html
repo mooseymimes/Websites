@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GOD 2028 — He's Seen Enough</title>
+  <meta name="description" content="The official 2028 presidential campaign of God. He floated down. He is not happy. He is not asking.">
+  <meta property="og:title" content="GOD 2028 — He's Seen Enough">
+  <meta property="og:description" content="Creator of Heaven, Earth, and the Weekend. Running for President, because apparently He has to do everything Himself.">
+  <meta name="theme-color" content="#0c0c10">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6 L60 56 L4 56 Z' fill='%23f0c25a'/%3E%3Cellipse cx='32' cy='40' rx='13' ry='8' fill='%23111'/%3E%3Ccircle cx='32' cy='40' r='5' fill='%23f0c25a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@700;900&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,600&family=Permanent+Marker&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-zone="heaven">
+  <a class="skip" href="#candidate">Skip to the candidate</a>
+
+  <!-- ===== ATMOSPHERE (fixed, scroll-driven) ===== -->
+  <div class="sky" aria-hidden="true">
+    <div class="sky__gradient"></div>
+    <div class="sky__clouds sky__clouds--far"></div>
+    <div class="sky__clouds sky__clouds--near"></div>
+    <div class="sky__storm"></div>
+    <div class="sky__flicker"></div>
+    <div class="sky__embers"></div>
+    <div class="sky__grain"></div>
+  </div>
+  <div class="flash" aria-hidden="true"></div>
+  <svg class="bolts" aria-hidden="true"></svg>
+
+  <!-- ===== ALTIMETER NAV ===== -->
+  <nav class="altimeter" aria-label="Descent navigation">
+    <div class="altimeter__readout">
+      <span class="altimeter__label">ALTITUDE</span>
+      <span class="altimeter__value" id="altValue">∞</span>
+      <span class="altimeter__unit">FT</span>
+    </div>
+    <div class="altimeter__rail">
+      <div class="altimeter__track"></div>
+      <div class="altimeter__marker" id="altMarker">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2l2.4 5.6L20 8.6l-4.4 4 1.3 6.2L12 15.9 7.1 18.8l1.3-6.2L4 8.6l5.6-1L12 2z" fill="currentColor"/></svg>
+      </div>
+      <ol class="altimeter__ticks" id="altTicks"></ol>
+    </div>
+    <div class="altimeter__wrath">
+      <span class="altimeter__label">WRATH</span>
+      <div class="wrath"><div class="wrath__fill" id="wrathFill"></div></div>
+    </div>
+    <div class="altimeter__smite">
+      <span class="altimeter__label">SMITTEN SINCE DESCENT</span>
+      <span class="smite__count" id="smiteCount">4,081</span>
+      <span class="smite__latest" id="smiteLatest">latest: a robocall, Tulsa</span>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- ===== ∞ FT — HEAVEN ===== -->
+    <section class="zone zone--heaven" id="heaven" data-alt="Infinity" data-name="Heaven" data-zone="heaven">
+      <p class="eyebrow eyebrow--calm">Altitude: ∞ &nbsp;·&nbsp; Heaven &nbsp;·&nbsp; Eternity, Day One</p>
+      <h1 class="calm-title">For a very, <em>very</em> long time,<br>He was patient.</h1>
+      <p class="calm-body">He watched. He listened. He received your prayers, your thoughts, and roughly four billion requests concerning parking.</p>
+      <p class="calm-body calm-body--small">He did not answer the ones about parking.</p>
+      <a class="scroll-cue" href="#descent"><span>Scroll to descend</span><i></i></a>
+    </section>
+
+    <!-- ===== 35,000 FT — THE DESCENT ===== -->
+    <section class="zone zone--descent" id="descent" data-alt="35000" data-name="The Descent" data-zone="descent">
+      <p class="eyebrow">Altitude: 35,000 ft &nbsp;·&nbsp; March 3, 2027 &nbsp;·&nbsp; 6:14 a.m.</p>
+      <div class="the-turn" aria-label="And then He said no.">
+        <span class="the-turn__word" data-reveal="1">AND</span>
+        <span class="the-turn__word" data-reveal="2">THEN</span>
+        <span class="the-turn__word the-turn__word--huge" data-reveal="3">NO.</span>
+      </div>
+      <article class="wire">
+        <p class="wire__slug">— BREAKING — DES MOINES, IA — WIRE 0614 —</p>
+        <p>At 6:14 a.m. local time, an enormous figure was observed descending through the cloud layer over the Iowa State Fairgrounds. Witnesses described the figure as “radiant,” “biblical,” and “visibly annoyed.”</p>
+        <p>Asked for comment, the figure said: “Where is the person in charge of all this.”</p>
+        <p>It was not a question.</p>
+        <p class="wire__end">— END WIRE —</p>
+      </article>
+      <p class="margin-note margin-note--right">He did not come in peace.<br>He came in a huff.</p>
+    </section>
+
+    <!-- ===== 28,000 FT — THE CANDIDATE ===== -->
+    <section class="zone zone--candidate" id="candidate" data-alt="28000" data-name="The Candidate" data-zone="storm">
+      <div class="hero">
+        <div class="hero__eye" id="eye" aria-hidden="true">
+          <svg viewBox="0 0 200 180" class="eye">
+            <defs>
+              <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#ffe7a3" stop-opacity=".9"/>
+                <stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <g class="eye__rays">
+              <line x1="100" y1="90" x2="100" y2="-40"/><line x1="100" y1="90" x2="205" y2="30"/><line x1="100" y1="90" x2="230" y2="90"/>
+              <line x1="100" y1="90" x2="205" y2="150"/><line x1="100" y1="90" x2="100" y2="220"/><line x1="100" y1="90" x2="-5" y2="150"/>
+              <line x1="100" y1="90" x2="-30" y2="90"/><line x1="100" y1="90" x2="-5" y2="30"/>
+            </g>
+            <circle cx="100" cy="90" r="95" fill="url(#eyeGlow)"/>
+            <path class="eye__tri" d="M100 12 L186 160 L14 160 Z"/>
+            <g class="eye__lid">
+              <path class="eye__white" d="M40 110 Q100 60 160 110 Q100 150 40 110 Z"/>
+              <g class="eye__pupil" id="pupil">
+                <circle cx="100" cy="110" r="17" class="eye__iris"/>
+                <circle cx="100" cy="110" r="8" class="eye__dot"/>
+                <circle cx="106" cy="104" r="3" fill="#fff"/>
+              </g>
+              <path class="eye__brow" d="M36 88 Q100 46 164 88"/>
+            </g>
+          </svg>
+        </div>
+        <p class="eyebrow eyebrow--light">Altitude: 28,000 ft &nbsp;·&nbsp; Paid for by Him</p>
+        <h2 class="hero__name"><span class="hero__god">GOD</span><span class="hero__year">2028</span></h2>
+        <p class="hero__tag">HE'S SEEN <span class="rage">ENOUGH.</span></p>
+        <p class="hero__sub">Creator of Heaven, Earth, and the Weekend. Running for President of the United States, because apparently He has to do everything Himself.</p>
+        <div class="hero__cta">
+          <a class="btn btn--holy" href="#confession">THOU SHALT VOLUNTEER</a>
+          <a class="btn btn--ghost" href="#tithe">TITHE NOW</a>
+        </div>
+        <p class="hero__fine">Not affiliated with any church. He has had complaints about all of them.</p>
+        <span class="stamp stamp--seen" aria-hidden="true">SEEN</span>
+      </div>
+    </section>
+
+    <!-- ===== SMITE TICKER ===== -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track" id="tickerTrack">
+        <span>SMITE INDEX ▲ 4,000%</span><span>LOCUSTS: STANDING BY</span><span>POLLING: +12 AMONG LIKELY VOTERS · +∞ AMONG THE MEEK</span><span>FROGS: SEE FORECAST</span><span>HE KNOWS WHAT YOU DID</span><span>HE ALSO KNOWS ABOUT THE OTHER THING</span><span>THE WEEKEND WAS HIS IDEA</span><span>REPLY-ALL: NOW A SIN</span><span>SEA: PARTED (DEMO AVAILABLE ON REQUEST)</span><span>THOUGHTS &amp; PRAYERS: RECEIVED. FILED. UNDER “NO.”</span><span>BURNING BUSH: SCHEDULED</span><span>PARKING PRAYERS: 11,000,000,000 AND COUNTING</span>
+      </div>
+    </div>
+
+    <!-- ===== 20,000 FT — THE STATEMENT ===== -->
+    <section class="zone zone--statement" id="statement" data-alt="20000" data-name="The Statement" data-zone="storm">
+      <p class="eyebrow eyebrow--light">Altitude: 20,000 ft &nbsp;·&nbsp; A statement from the Candidate &nbsp;·&nbsp; Delivered without notes</p>
+      <h2 class="sharpie sharpie--title">Why He Is Running</h2>
+      <div class="rant">
+        <p class="rant__line" style="--size:1.2">I GAVE YOU ONE (1) PLANET.</p>
+        <p class="rant__line" style="--size:.8">IT CAME WITH INSTRUCTIONS. <span class="sharpie sharpie--note">they were VERY clear</span></p>
+        <p class="rant__line" style="--size:1.6">YOU HAVE <span class="rage">MICROWAVED</span> IT.</p>
+        <p class="rant__line" style="--size:.9">I SAID “BE FRUITFUL.” I DID NOT SAY BE <s>INSUFFERABLE</s> LIKE THIS.</p>
+        <p class="rant__line" style="--size:1.1">I INVENTED THE WEEKEND. YOU INVENTED THE “QUICK SYNC.”</p>
+        <p class="rant__line" style="--size:1.4">YOU HAVE PUT A FEE ON THE FEE. <span class="sharpie sharpie--note">ON THE FEE.</span></p>
+        <p class="rant__line" style="--size:.75">SOMEONE NAMED A HURRICANE AFTER THEIR EX. I HAD TO SIGN OFF ON THAT.</p>
+        <p class="rant__line" style="--size:1">I SENT A RAINBOW. YOU SENT A NOTIFICATION.</p>
+        <p class="rant__line" style="--size:1.3">I HAVE RECEIVED <span class="rage">ELEVEN BILLION</span> PRAYERS ABOUT PARKING. <span class="sharpie sharpie--note">I have kept count.</span></p>
+        <p class="rant__line" style="--size:.85">SO NO. I AM NOT “ABOVE POLITICS.”</p>
+        <p class="rant__line" style="--size:1.7">NOT ANYMORE.</p>
+        <p class="rant__line rant__line--final" style="--size:2.2">I AM COMING <span class="rage">DOWN THERE.</span></p>
+        <p class="rant__sig">— Him</p>
+      </div>
+      <p class="margin-note margin-note--left sharpie">not a metaphor.</p>
+      <p class="margin-note margin-note--right sharpie">I am not yelling.<br>This is my inside voice.</p>
+    </section>
+
+    <!-- ===== 12,000 FT — THE PLANKS ===== -->
+    <section class="zone zone--planks" id="planks" data-alt="12000" data-name="The Ten Planks" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 12,000 ft &nbsp;·&nbsp; Platform &nbsp;·&nbsp; Carved, not drafted</p>
+      <h2 class="wrath-title">The Ten Planks</h2>
+      <p class="wrath-sub">He tried ten before. People got creative with them. These are simpler.</p>
+      <div class="tablets">
+        <ol class="tablet" start="1">
+          <li><b>Thou shalt not put a fee on a fee.</b> A fee is a fee. That is the whole idea of a fee.</li>
+          <li><b>Thou shalt fix the potholes.</b> He can see every one of them from up there. He has a list. It is long.</li>
+          <li><b>Thou shalt not price-gouge.</b> He invented abundance. It is very easy. Try it.</li>
+          <li><b>Thou shalt take the weekend off.</b> He made it for you. Keep it holy, or at least keep it.</li>
+          <li><b>Thou shalt not hoard.</b> Seven yachts is coveting with a receipt.</li>
+          <svg class="tablet__crack" viewBox="0 0 100 400" aria-hidden="true"><path d="M8 0 L14 40 L6 70 L18 120 L11 150"/></svg>
+        </ol>
+        <ol class="tablet tablet--two" start="6">
+          <li><b>Thou shalt not shrink the airplane seat.</b> It is done shrinking. He has spoken.</li>
+          <li><b>Thou shalt follow up on thy thoughts and prayers.</b> He gets them. He reads them. Now do the thing.</li>
+          <li><b>Thou shalt not say “synergy,” “circle back,” or “quick sync” in His presence.</b> The quick sync is never quick.</li>
+          <li><b>Thou shalt make the customer service line reach a person.</b> A real one. In under forty days and forty nights.</li>
+          <li><b>Thou shalt not ignore the check-engine light.</b> It is a light. He made light. It means something.</li>
+          <svg class="tablet__crack tablet__crack--two" viewBox="0 0 100 400" aria-hidden="true"><path d="M92 400 L84 350 L95 320 L80 270 L88 240"/></svg>
+        </ol>
+      </div>
+      <p class="footnote">Additional planks available upon request. He has more. He has <em>so many</em> more.</p>
+    </section>
+
+    <!-- ===== 8,000 FT — PLAGUE FORECAST ===== -->
+    <section class="zone zone--forecast" id="forecast" data-alt="8000" data-name="Plague Forecast" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 8,000 ft &nbsp;·&nbsp; Meteorology &nbsp;·&nbsp; Subject to your behavior</p>
+      <h2 class="wrath-title">7-Day Plague Forecast</h2>
+      <div class="forecast">
+        <div class="forecast__day"><span class="forecast__dow">MON</span><span class="forecast__icon">🐸</span><span class="forecast__name">Frogs</span><span class="forecast__pct">60%</span><span class="forecast__note">Localized. Mostly the Senate.</span></div>
+        <div class="forecast__day"><span class="forecast__dow">TUE</span><span class="forecast__icon">🦗</span><span class="forecast__name">Locusts</span><span class="forecast__pct">40%</span><span class="forecast__note">Light to moderate. Bring a jacket.</span></div>
+        <div class="forecast__day"><span class="forecast__dow">WED</span><span class="forecast__icon">🌑</span><span class="forecast__name">Darkness</span><span class="forecast__pct">85%</span><span class="forecast__note">Partial. Similar to your group chat.</span></div>
+        <div class="forecast__day forecast__day--severe"><span class="forecast__dow">THU</span><span class="forecast__icon">🔥</span><span class="forecast__name">Hail, then Fire</span><span class="forecast__pct">70%</span><span class="forecast__note">Then a stern talk.</span></div>
+        <div class="forecast__day"><span class="forecast__dow">FRI</span><span class="forecast__icon">🫧</span><span class="forecast__name">Boils</span><span class="forecast__pct">20%</span><span class="forecast__note">Mild. Moisturize.</span></div>
+        <div class="forecast__day forecast__day--rest"><span class="forecast__dow">SAT</span><span class="forecast__icon">☁️</span><span class="forecast__name">Rest</span><span class="forecast__pct">0%</span><span class="forecast__note">His.</span></div>
+        <div class="forecast__day forecast__day--rest"><span class="forecast__dow">SUN</span><span class="forecast__icon">☁️</span><span class="forecast__name">Rest</span><span class="forecast__pct">0%</span><span class="forecast__note">Also His. Two days. He earned it.</span></div>
+      </div>
+      <p class="forecast__index"><span>SMITE INDEX</span> <b>11</b> <span>EXTREME — SEEK SHELTER OR REPENTANCE, WHICHEVER IS CLOSER</span></p>
+    </section>
+
+    <!-- ===== 5,000 FT — ENDORSEMENTS ===== -->
+    <section class="zone zone--endorse" id="endorsements" data-alt="5000" data-name="Endorsements" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 5,000 ft &nbsp;·&nbsp; Endorsements &nbsp;·&nbsp; Unsolicited. He does not solicit.</p>
+      <h2 class="wrath-title">Who Stands With Him</h2>
+      <ul class="quotes">
+        <li class="quote" style="--r:-2deg"><blockquote>“I have been up every single day for four and a half billion years. Not one thank-you. He noticed. That's all I'm saying.”</blockquote><cite>— The Sun</cite></li>
+        <li class="quote" style="--r:1.5deg"><blockquote>“We're honestly just glad to be included in the conversation.”</blockquote><cite>— Locusts</cite></li>
+        <li class="quote" style="--r:-1deg"><blockquote>“I have some questions. Several. But… sure. Sure.”</blockquote><cite>— Job</cite></li>
+        <li class="quote" style="--r:2.5deg"><blockquote>“Mr. Moses has no comment on the tablets, the second set of tablets, or the whereabouts of the first set.”</blockquote><cite>— Spokesperson for Moses</cite></li>
+        <li class="quote quote--retracted" style="--r:-3deg"><blockquote>“He's got my vote. Honestly, what's the worst that could—”</blockquote><cite>— A Man in Ohio, Struck by Lightning in 2019</cite><span class="stamp stamp--retracted" aria-label="Retracted">RETRACTED</span></li>
+        <li class="quote" style="--r:1deg"><blockquote>“Great planner. Told me about the flood well in advance. Well. In advance-ish.”</blockquote><cite>— Noah</cite></li>
+        <li class="quote" style="--r:-1.5deg"><blockquote>“He made me. I'm biased. But I stand by it.”</blockquote><cite>— The Weekend</cite></li>
+        <li class="quote" style="--r:2deg"><blockquote>“He has never once let me down. Which is my job. So.”</blockquote><cite>— Gravity</cite></li>
+      </ul>
+    </section>
+
+    <!-- ===== 3,000 FT — THE TOUR ===== -->
+    <section class="zone zone--tour" id="tour" data-alt="3000" data-name="The Tour" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 3,000 ft &nbsp;·&nbsp; The Descension Tour &nbsp;·&nbsp; Dates not subject to change. Ever.</p>
+      <h2 class="wrath-title">He Is Coming To A Town Near You</h2>
+      <p class="wrath-sub">Specifically yours.</p>
+      <ul class="posters">
+        <li class="poster poster--a"><span class="poster__kind">RALLY</span><span class="poster__where">MOUNT SINAI</span><span class="poster__when">Bring sandals</span><span class="stamp stamp--sold">SOLD OUT</span></li>
+        <li class="poster poster--b"><span class="poster__kind">TOWN HALL</span><span class="poster__where">YOUR LIVING ROOM</span><span class="poster__when">Uninvited. He will be there anyway.</span></li>
+        <li class="poster poster--c"><span class="poster__kind">DEBATE</span><span class="poster__where">THE BURNING BUSH</span><span class="poster__when">Format: He talks. Moderator: also Him.</span></li>
+        <li class="poster poster--d"><span class="poster__kind">MEET &amp; GREET</span><span class="poster__where">THE WILDERNESS</span><span class="poster__when">40 days. Snacks not provided.</span></li>
+        <li class="poster poster--e"><span class="poster__kind">LISTENING SESSION</span><span class="poster__where">EVERYWHERE</span><span class="poster__when">Always. He is already listening.</span></li>
+        <li class="poster poster--f"><span class="poster__kind">FUNDRAISER</span><span class="poster__where">THE TEMPLE</span><span class="poster__when">Tables will not be flipped. This time.</span></li>
+      </ul>
+    </section>
+
+    <!-- ===== 1,500 FT — CONFESSION ===== -->
+    <section class="zone zone--confession" id="confession" data-alt="1500" data-name="Confession" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 1,500 ft &nbsp;·&nbsp; Volunteer &nbsp;·&nbsp; The booth is open</p>
+      <h2 class="wrath-title">Confess. Then Canvass.</h2>
+      <p class="wrath-sub">Forgive us, Candidate, for we have not yet volunteered.</p>
+      <div class="booth">
+        <div class="booth__grille" aria-hidden="true"></div>
+        <form class="booth__form" id="confessForm" novalidate>
+          <label class="field"><span>Name <small>(what He already calls you)</small></span><input type="text" name="name" autocomplete="name" required placeholder="Your name"></label>
+          <label class="field"><span>Email <small>(He has it; this is for the newsletter)</small></span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label class="field"><span>Sin <small>(optional)</small></span><textarea name="sin" rows="3" placeholder="He knows. This is for our records."></textarea></label>
+          <fieldset class="field field--checks">
+            <legend>Sign me up for:</legend>
+            <label><input type="checkbox" name="role" value="doors"> Door-knocking <small>— He prefers you knock. He will let Himself in.</small></label>
+            <label><input type="checkbox" name="role" value="phones"> Phone banking <small>— He is already listening. You will be following up.</small></label>
+            <label><input type="checkbox" name="role" value="smiting"> Smiting <small>— support role, paperwork only.</small></label>
+            <label><input type="checkbox" name="role" value="sign"> Yard sign <small>— lightning-rated.</small></label>
+          </fieldset>
+          <button class="btn btn--holy btn--wide" type="submit">ABSOLVE &amp; ENROLL</button>
+          <p class="booth__status" id="boothStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== 500 FT — TITHE ===== -->
+    <section class="zone zone--tithe" id="tithe" data-alt="500" data-name="Tithe" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 500 ft &nbsp;·&nbsp; Contribute &nbsp;·&nbsp; The plate is coming around</p>
+      <h2 class="wrath-title">Tithe.</h2>
+      <p class="wrath-sub">Ten percent. As previously discussed. Several times. In writing.</p>
+      <div class="offering">
+        <div class="coins" role="group" aria-label="Choose an amount">
+          <button class="coin" type="button" data-amount="$7"><b>$7</b><span>One per day of creation</span></button>
+          <button class="coin" type="button" data-amount="$40"><b>$40</b><span>Days and nights</span></button>
+          <button class="coin" type="button" data-amount="$666"><b>$666</b><span>Ironic. Accepted.</span></button>
+          <button class="coin" type="button" data-amount="$2,028"><b>$2,028</b><span>The full campaign</span></button>
+          <button class="coin" type="button" data-amount="10%"><b>10%</b><span>As discussed</span></button>
+          <button class="coin coin--no" type="button" data-amount="Firstborn" disabled><b>Firstborn</b><span>No longer accepted. He has moved on. Mostly.</span></button>
+        </div>
+        <div class="plate" id="plate" aria-hidden="true"><div class="plate__rim"></div><div class="plate__bowl"></div><p class="plate__label">COLLECTION</p></div>
+        <div class="offering__actions">
+          <p class="offering__methods">Cash · Card · Burnt offering <s>(discontinued)</s> · Gold, frankincense, or myrrh <em>(myrrh preferred)</em></p>
+          <button class="btn btn--holy btn--wide" type="button" id="giveBtn">GIVE UNTO HIM</button>
+          <p class="offering__status" id="giveStatus" role="status" aria-live="polite"></p>
+          <p class="fine">Contributions are not tax-deductible. He has thoughts about your taxes, too.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 0 FT — EARTH ===== -->
+    <footer class="zone zone--earth" id="earth" data-alt="0" data-name="Earth" data-zone="earth">
+      <svg class="crack" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M600 0 L590 40 L612 70 L580 110 L604 140 L570 190 L560 220 M600 0 L640 60 L700 90 L760 140 L830 160 M600 0 L560 50 L500 70 L440 120 L380 130 L300 170 M612 70 L660 120 L650 170 M580 110 L520 150 L470 200"/>
+      </svg>
+      <h2 class="impact"><span>IMPACT.</span></h2>
+      <p class="earth__line">You have reached Earth. So has He.</p>
+      <p class="earth__paid">Paid for by <b>Him</b>. Not authorized by any candidate's committee, because He is the committee.</p>
+      <nav class="earth__links" aria-label="Footer">
+        <a href="#planks">Platform</a><a href="#forecast">Plagues</a><a href="#tour">Tour</a><a href="#tithe">Tithe</a><a href="#heaven" id="ascend">Ascend ↑</a>
+      </nav>
+      <p class="earth__privacy">Privacy policy: He sees everything. This page sets no cookies. This is mostly for you.</p>
+      <p class="earth__parody">This is a work of satire. To the best of our knowledge, God has not filed with the Federal Election Commission. If He has, we were not consulted, which is on brand.</p>
+      <p class="earth__alt">ALTITUDE: 0 FT &nbsp;·&nbsp; SMITTEN SINCE DESCENT: <span id="smiteFooter">4,081</span></p>
+    </footer>
+
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js" defer></script>
+</body>
+</html>
