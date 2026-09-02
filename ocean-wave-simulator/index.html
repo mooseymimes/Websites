@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ocean Wave Simulator</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #06121f;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #e8f1f8; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #ui { position: fixed; top: 14px; left: 14px; width: 250px; box-sizing: border-box;
+    background: rgba(8, 20, 34, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.35); user-select: none; }
+  #ui.collapsed .body { display: none; }
+  #ui h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: .02em; display: flex; justify-content: space-between; align-items: center; }
+  #ui h1 button { background: none; border: 1px solid rgba(255,255,255,.2); color: #cfe0ee; border-radius: 6px;
+    font-size: 11px; padding: 2px 7px; cursor: pointer; }
+  .body { margin-top: 10px; }
+  label { display: block; font-size: 12px; margin: 9px 0 2px; color: #b9cbda; }
+  label span { float: right; color: #e8f1f8; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; margin: 2px 0 0; accent-color: #5fb3e6; }
+  .row { display: flex; gap: 6px; margin-top: 12px; }
+  .row button { flex: 1; background: #1f5f8f; border: none; color: #fff; font-size: 12px; font-weight: 600;
+    padding: 8px 4px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+  .row button:hover { background: #2a7cb8; }
+  .row button.secondary { background: rgba(255,255,255,.1); }
+  .row button.secondary:hover { background: rgba(255,255,255,.18); }
+  .stats { display: flex; justify-content: space-between; font-size: 11px; color: #9fb4c6; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  .hint { font-size: 11px; color: #8ea3b5; margin: 10px 0 0; line-height: 1.45; }
+  #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; font-size: 15px; line-height: 1.5; }
+  @media (max-width: 520px) { #ui { width: calc(100% - 28px); } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <h1>Ocean Wave Simulator <button id="toggle">hide</button></h1>
+  <div class="body">
+    <label>Wave height <span id="vHeight"></span></label>
+    <input type="range" id="height" min="0" max="2" step="0.01" value="1">
+    <label>Choppiness <span id="vChop"></span></label>
+    <input type="range" id="chop" min="0" max="1" step="0.01" value="0.6">
+    <label>Wavelength <span id="vLen"></span></label>
+    <input type="range" id="len" min="0.4" max="2.2" step="0.01" value="1">
+    <label>Wind direction <span id="vWind"></span></label>
+    <input type="range" id="wind" min="0" max="360" step="1" value="35">
+    <label>Sun elevation <span id="vSun"></span></label>
+    <input type="range" id="sun" min="2" max="75" step="1" value="26">
+    <div class="row">
+      <button id="drop">Drop barrel</button>
+      <button id="drop10">Drop 10</button>
+      <button id="clear" class="secondary">Clear</button>
+    </div>
+    <div class="stats"><span id="count">0 barrels</span><span id="fps">– fps</span></div>
+    <p class="hint">Click the water to drop a barrel · Drag to orbit · Scroll / pinch to zoom · Space drops a barrel</p>
+  </div>
+</div>
+<div id="err">Sorry, this page needs a browser with WebGL2 support.</div>
+
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// Setup
+// ---------------------------------------------------------------------------
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+if (!gl) {
+  document.getElementById('err').style.display = 'flex';
+  document.getElementById('ui').style.display = 'none';
+  throw new Error('WebGL2 not available');
+}
+
+const NW = 8;                 // number of Gerstner waves
+const MAX_BARRELS = 64;
+const G = 9.81;
+
+// ---------------------------------------------------------------------------
+// Shaders
+// ---------------------------------------------------------------------------
+const COMMON_GLSL = `
+uniform vec3 uSunDir, uSunColor, uZenith, uHorizon, uCamPos;
+uniform float uSunIntensity, uTime, uFogDensity, uExposure;
+
+vec3 skyColor(vec3 d) {
+  float t = clamp(d.y, 0.0, 1.0);
+  vec3 col = mix(uHorizon, uZenith, pow(t, 0.4));
+  float sd = max(dot(d, uSunDir), 0.0);
+  col += uSunColor * uSunIntensity * (pow(sd, 12.0) * 0.05 + pow(sd, 150.0) * 0.25);
+  return col;
+}
+vec3 tonemap(vec3 c) {
+  c *= uExposure;
+  c = clamp((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14), 0.0, 1.0);
+  return pow(c, vec3(1.0 / 2.2));
+}
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.13 + 7.7; a *= 0.5; }
+  return v;
+}
+vec3 applyFog(vec3 col, vec3 world) {
+  vec3 dv = world - uCamPos;
+  float dist = length(dv);
+  float f = 1.0 - exp(-dist * uFogDensity);
+  vec3 hd = normalize(vec3(dv.x, 0.0, dv.z) + vec3(1e-4, 0.0, 0.0));
+  vec3 fc = skyColor(normalize(vec3(hd.x, 0.03, hd.z)));
+  return mix(col, fc, f);
+}
+`;
+
+const WAVE_GLSL = `
+#define NW ${NW}
+uniform vec4 uWaveA[NW]; // dir.x, dir.y, amplitude, k
+uniform vec4 uWaveB[NW]; // omega, Q, phase, -
+void gerstner(vec2 p, float t, out vec3 disp, out vec3 dPdx, out vec3 dPdz) {
+  disp = vec3(0.0);
+  dPdx = vec3(1.0, 0.0, 0.0);
+  dPdz = vec3(0.0, 0.0, 1.0);
+  for (int i = 0; i < NW; i++) {
+    vec2 D = uWaveA[i].xy;
+    float A = uWaveA[i].z, k = uWaveA[i].w;
+    float w = uWaveB[i].x, Q = uWaveB[i].y, ph = uWaveB[i].z;
+    float f = k * dot(D, p) - w * t + ph;
+    float s = sin(f), c = cos(f);
+    disp += vec3(Q * A * D.x * c, A * s, Q * A * D.y * c);
+    dPdx += vec3(-Q * A * k * D.x * D.x * s, A * k * D.x * c, -Q * A * k * D.x * D.y * s);
+    dPdz += vec3(-Q * A * k * D.x * D.y * s, A * k * D.y * c, -Q * A * k * D.y * D.y * s);
+  }
+}
+`;
+
+const SKY_VS = `#version 300 es
+out vec2 vNdc;
+void main() {
+  vec2 p = vec2((gl_VertexID == 1) ? 3.0 : -1.0, (gl_VertexID == 2) ? 3.0 : -1.0);
+  vNdc = p;
+  gl_Position = vec4(p, 0.9999, 1.0);
+}`;
+
+const SKY_FS = `#version 300 es
+precision highp float;
+${COMMON_GLSL}
+uniform mat4 uInvVP;
+in vec2 vNdc;
+out vec4 fragColor;
+void main() {
+  vec4 wp = uInvVP * vec4(vNdc, 1.0, 1.0);
+  vec3 dir = normalize(wp.xyz / wp.w - uCamPos);
+  vec3 col;
+  if (dir.y >= 0.0) {
+    col = skyColor(dir);
+    float sd = dot(dir, uSunDir);
+    float discI = mix(2.5, 12.0, smoothstep(0.05, 0.45, uSunDir.y));
+    col += uSunColor * uSunIntensity * discI * smoothstep(0.9993, 0.9997, sd);
+    // faint high clouds
+    vec2 cp = dir.xz / max(dir.y, 0.05) * 0.35;
+    float cl = fbm(cp + uTime * 0.005);
+    cl = smoothstep(0.62, 0.9, cl) * smoothstep(0.0, 0.3, dir.y);
+    vec3 cloudCol = mix(uHorizon, uSunColor * 0.5 + 0.5, 0.5) * (0.5 + 0.5 * uSunIntensity / 3.2);
+    col = mix(col, cloudCol, cl * 0.35);
+  } else {
+    col = skyColor(vec3(dir.x, 0.0, dir.z));
+  }
+  fragColor = vec4(tonemap(col), 1.0);
+}`;
+
+const WATER_VS = `#version 300 es
+${WAVE_GLSL}
+in vec2 aPos;
+uniform mat4 uVP;
+uniform float uTime;
+out vec3 vWorld;
+out vec3 vNormal;
+out vec2 vP0;
+out float vJ;
+out float vHeight;
+void main() {
+  vec3 d, dx, dz;
+  gerstner(aPos, uTime, d, dx, dz);
+  vec3 P = vec3(aPos.x, 0.0, aPos.y) + d;
+  vWorld = P;
+  vNormal = normalize(cross(dz, dx));
+  vJ = dx.x * dz.z - dx.z * dz.x;
+  vP0 = aPos;
+  vHeight = d.y;
+  gl_Position = uVP * vec4(P, 1.0);
+}`;
+
+const WATER_FS = `#version 300 es
+precision highp float;
+${COMMON_GLSL}
+uniform vec3 uDeepColor, uShallowColor;
+uniform float uMaxAmp, uDetail, uFoamStart;
+uniform vec4 uBarrels[${MAX_BARRELS}]; // x, z, radius, presence
+uniform int uBarrelCount;
+in vec3 vWorld;
+in vec3 vNormal;
+in vec2 vP0;
+in float vJ;
+in float vHeight;
+out vec4 fragColor;
+
+void main() {
+  vec3 N = normalize(vNormal);
+  float t = uTime;
+  vec2 p = vP0;
+  float dist = length(vWorld - uCamPos);
+
+  // small-scale ripples for sparkle (analytic normal perturbation)
+  vec2 dn = vec2(0.0);
+  float wobble = 0.35 + 1.3 * fbm(p * 0.35 + t * 0.06);
+  { vec2 D = normalize(vec2(0.7, 0.4));  float k = 5.0;  dn += D * k * 0.010 * cos(k * dot(D, p) - t * 4.5 + wobble * 2.0); }
+  { vec2 D = normalize(vec2(-0.3, 0.9)); float k = 9.0;  dn += D * k * 0.0045 * cos(k * dot(D, p) - t * 6.5 + 1.3 - wobble); }
+  { vec2 D = normalize(vec2(0.9, -0.5)); float k = 15.0; dn += D * k * 0.0022 * cos(k * dot(D, p) - t * 8.5 + 2.1 + wobble * 3.0); }
+  { vec2 D = normalize(vec2(-0.8, -0.6)); float k = 24.0; dn += D * k * 0.0011 * cos(k * dot(D, p) - t * 10.5 + 0.7); }
+  float detail = uDetail * exp(-dist * 0.02) * wobble;
+  N = normalize(N + vec3(-dn.x, 0.0, -dn.y) * detail);
+
+  vec3 V = normalize(uCamPos - vWorld);
+  float NdV = max(dot(N, V), 0.0);
+  vec3 R = reflect(-V, N);
+  R.y = max(R.y, 0.02);
+  R = normalize(R);
+  vec3 refl = skyColor(R);
+  float fres = 0.02 + 0.98 * pow(1.0 - NdV, 5.0);
+
+  vec3 sun = uSunColor * uSunIntensity;
+  float NdL = max(dot(N, uSunDir), 0.0);
+  float h = clamp(vHeight / max(uMaxAmp, 0.05) * 0.5 + 0.5, 0.0, 1.0);
+
+  // water body: ambient + diffuse scattering + backlit subsurface through crests
+  vec3 ambient = mix(uHorizon, uZenith, 0.6) * 0.8;
+  vec3 body = mix(uDeepColor, uShallowColor, h * 0.35) * (ambient + sun * NdL * 0.3);
+  float back = clamp(dot(V, -uSunDir) * 0.5 + 0.5, 0.0, 1.0);
+  float sss = pow(back, 4.0) * smoothstep(0.35, 1.0, h) * (0.3 + 0.7 * NdL) * (1.0 - fres);
+  body += uShallowColor * sun * sss * 0.22;
+
+  // sun specular: sharp highlight plus wider glitter, roughened with distance to avoid aliasing
+  vec3 H = normalize(uSunDir + V);
+  float NdH = max(dot(N, H), 0.0);
+  float rough = 1.0 / (1.0 + dist * 0.035);
+  vec3 spec = sun * (pow(NdH, 900.0 * rough) * 2.2 * rough + pow(NdH, 60.0 * rough) * 0.08);
+  spec *= 0.06 + 0.94 * fres / 0.98; // fresnel-weighted
+
+  vec3 col = mix(body, refl, fres) + spec;
+
+  // foam: breaking crests (Jacobian) + barrel wakes
+  float n1 = fbm(vWorld.xz * 1.4 + t * 0.15);
+  float n2 = noise(vWorld.xz * 7.0 - t * 0.5);
+  float foam = smoothstep(uFoamStart, uFoamStart - 0.45, vJ) * (0.35 + 0.9 * n1) * (0.7 + 0.5 * n2);
+  float shade = 0.0;
+  for (int i = 0; i < ${MAX_BARRELS}; i++) {
+    if (i >= uBarrelCount) break;
+    vec4 b = uBarrels[i];
+    float d = distance(vWorld.xz, b.xy);
+    float ring = smoothstep(b.z * 2.4, b.z * 1.0, d);
+    foam += ring * b.w * 0.6 * (0.3 + 0.7 * noise(vWorld.xz * 4.0 + t * 0.8));
+    shade += smoothstep(b.z * 1.6, b.z * 0.5, d) * b.w * 0.7;
+  }
+  foam = clamp(foam, 0.0, 1.0);
+  shade = clamp(shade, 0.0, 1.0);
+  col *= 1.0 - 0.35 * shade;
+  vec3 foamCol = vec3(0.95) * (ambient * 0.9 + sun * (0.15 + 0.85 * NdL) * 0.4);
+  col = mix(col, foamCol, foam * 0.9);
+
+  col = applyFog(col, vWorld);
+  fragColor = vec4(tonemap(col), 1.0);
+}`;
+
+const BARREL_VS = `#version 300 es
+in vec3 aPos;
+in vec3 aNormal;
+in vec2 aUV;
+in float aKind;
+uniform mat4 uVP, uModel;
+out vec3 vWorld;
+out vec3 vNormal;
+out vec2 vUV;
+out float vKind;
+void main() {
+  vec4 w = uModel * vec4(aPos, 1.0);
+  vWorld = w.xyz;
+  vNormal = mat3(uModel) * aNormal;
+  vUV = aUV;
+  vKind = aKind;
+  gl_Position = uVP * w;
+}`;
+
+const BARREL_FS = `#version 300 es
+precision highp float;
+${COMMON_GLSL}
+uniform vec3 uTint;
+uniform vec3 uDeepColor;
+uniform float uWaterLevel;
+in vec3 vWorld;
+in vec3 vNormal;
+in vec2 vUV;
+in float vKind;
+out vec4 fragColor;
+void main() {
+  vec3 N = normalize(vNormal);
+  vec3 V = normalize(uCamPos - vWorld);
+  vec3 base;
+  float metal = 0.0;
+  if (vKind < 0.5) {
+    float stave = fract(vUV.x * 12.0);
+    float seam = smoothstep(0.0, 0.06, stave) * smoothstep(1.0, 0.94, stave);
+    float idx = floor(vUV.x * 12.0);
+    float grain = noise(vec2(vUV.y * 28.0 + idx * 7.3, idx * 3.1 + vUV.x * 60.0)) * 0.35
+                + noise(vec2(vUV.y * 110.0, idx * 1.7)) * 0.15;
+    vec3 wood = uTint * (0.62 + grain);
+    wood = mix(wood * 0.3, wood, seam);
+    float hoop = 0.0;
+    hoop = max(hoop, 1.0 - smoothstep(0.024, 0.034, abs(vUV.y - 0.09)));
+    hoop = max(hoop, 1.0 - smoothstep(0.024, 0.034, abs(vUV.y - 0.33)));
+    hoop = max(hoop, 1.0 - smoothstep(0.024, 0.034, abs(vUV.y - 0.67)));
+    hoop = max(hoop, 1.0 - smoothstep(0.024, 0.034, abs(vUV.y - 0.91)));
+    vec3 metalCol = vec3(0.30, 0.31, 0.33) * (0.75 + 0.5 * noise(vUV * vec2(70.0, 25.0)));
+    base = mix(wood, metalCol, hoop);
+    metal = hoop;
+  } else {
+    vec2 c = vUV * 2.0 - 1.0;
+    float plank = fract(c.x * 2.5 + 0.5);
+    float seam = smoothstep(0.0, 0.07, plank) * smoothstep(1.0, 0.93, plank);
+    float grain = noise(vec2(c.y * 22.0, floor(c.x * 2.5 + 0.5) * 5.0 + c.x * 3.0)) * 0.35;
+    base = uTint * (0.58 + grain);
+    base = mix(base * 0.3, base, seam);
+    float rim = smoothstep(0.84, 0.9, length(c));
+    base = mix(base, vec3(0.3, 0.31, 0.33), rim);
+    metal = rim;
+  }
+  vec3 sun = uSunColor * uSunIntensity;
+  float NdL = max(dot(N, uSunDir), 0.0);
+  vec3 skyAvg = mix(uHorizon, uZenith, 0.5);
+  vec3 down = uDeepColor * 3.0 * skyAvg;
+  vec3 amb = mix(down, skyAvg, N.y * 0.5 + 0.5) * 0.7;
+  vec3 col = base * (amb + sun * NdL * 0.42 * (1.0 - 0.5 * metal));
+  vec3 H = normalize(uSunDir + V);
+  float spec = pow(max(dot(N, H), 0.0), mix(28.0, 180.0, metal)) * mix(0.10, 0.9, metal);
+  col += sun * spec * 0.6;
+  vec3 R = reflect(-V, N);
+  R.y = max(R.y, 0.0);
+  float fr = pow(1.0 - max(dot(N, V), 0.0), 4.0);
+  col += skyColor(normalize(R + vec3(0.0, 0.001, 0.0))) * (metal * 0.18 + 0.06 * fr);
+  // wet band just above the water line
+  float wet = 1.0 - smoothstep(0.0, 0.35, vWorld.y - uWaterLevel);
+  col *= 1.0 - 0.35 * wet;
+  col = applyFog(col, vWorld);
+  fragColor = vec4(tonemap(col), 1.0);
+}`;
+
+const RING_VS = `#version 300 es
+${WAVE_GLSL}
+in vec2 aCorner;
+in vec4 aInst; // x, z, t0, scale
+uniform mat4 uVP;
+uniform float uTime;
+out vec2 vUV;
+out float vAge;
+out float vSeed;
+void main() {
+  float age = clamp((uTime - aInst.z) / 1.8, 0.0, 1.0);
+  float size = aInst.w * (0.5 + 1.8 * age);
+  vec2 xz = aInst.xy + aCorner * size;
+  vec3 d, dx, dz;
+  gerstner(xz, uTime, d, dx, dz);
+  vec3 P = vec3(xz.x, 0.0, xz.y) + d + vec3(0.0, 0.06, 0.0);
+  vUV = aCorner;
+  vAge = age;
+  vSeed = aInst.z;
+  gl_Position = uVP * vec4(P, 1.0);
+}`;
+
+const RING_FS = `#version 300 es
+precision highp float;
+${COMMON_GLSL}
+in vec2 vUV;
+in float vAge;
+in float vSeed;
+out vec4 fragColor;
+void main() {
+  float r = length(vUV);
+  float ringR = 0.12 + 0.82 * vAge;
+  float w = 0.06 + 0.14 * vAge;
+  float ring = smoothstep(w, 0.0, abs(r - ringR));
+  float n = fbm(vUV * 5.0 + vSeed * 3.1);
+  float inner = smoothstep(ringR, ringR * 0.15, r) * (1.0 - vAge) * 0.7;
+  float a = clamp(ring * (0.55 + 0.7 * n) + inner * (0.5 + 0.7 * n), 0.0, 1.0) * (1.0 - vAge) * (1.0 - vAge);
+  a *= smoothstep(1.0, 0.9, r);
+  vec3 sun = uSunColor * uSunIntensity;
+  vec3 col = vec3(0.95) * (mix(uHorizon, uZenith, 0.5) * 0.8 + sun * 0.35 * max(uSunDir.y, 0.1));
+  fragColor = vec4(tonemap(col), a);
+}`;
+
+const POINT_VS = `#version 300 es
+in vec3 aPos;
+in float aLife;
+uniform mat4 uVP;
+uniform float uPointScale;
+out float vLife;
+void main() {
+  vec4 c = uVP * vec4(aPos, 1.0);
+  gl_Position = c;
+  gl_PointSize = uPointScale * (0.10 + 0.12 * aLife) / max(c.w, 0.1);
+  vLife = aLife;
+}`;
+
+const POINT_FS = `#version 300 es
+precision highp float;
+${COMMON_GLSL}
+in float vLife;
+out vec4 fragColor;
+void main() {
+  float d = length(gl_PointCoord - 0.5) * 2.0;
+  float a = smoothstep(1.0, 0.25, d) * smoothstep(0.0, 0.3, vLife) * 0.85;
+  vec3 sun = uSunColor * uSunIntensity;
+  vec3 col = vec3(0.95) * (mix(uHorizon, uZenith, 0.5) * 0.9 + sun * 0.35 * max(uSunDir.y, 0.1));
+  fragColor = vec4(tonemap(col), a);
+}`;
+
+// ---------------------------------------------------------------------------
+// GL helpers
+// ---------------------------------------------------------------------------
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(s);
+    console.error(log, src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n'));
+    throw new Error('Shader compile failed: ' + log);
+  }
+  return s;
+}
+function program(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('Link failed: ' + gl.getProgramInfoLog(p));
+  const cache = {};
+  return {
+    p,
+    u(name) { if (!(name in cache)) cache[name] = gl.getUniformLocation(p, name); return cache[name]; },
+    a(name) { return gl.getAttribLocation(p, name); },
+    use() { gl.useProgram(p); },
+  };
+}
+
+const skyProg = program(SKY_VS, SKY_FS);
+const waterProg = program(WATER_VS, WATER_FS);
+const barrelProg = program(BARREL_VS, BARREL_FS);
+const ringProg = program(RING_VS, RING_FS);
+const pointProg = program(POINT_VS, POINT_FS);
+
+// ---------------------------------------------------------------------------
+// Math
+// ---------------------------------------------------------------------------
+const m4 = {
+  perspective(fov, aspect, near, far) {
+    const f = 1 / Math.tan(fov / 2), nf = 1 / (near - far);
+    return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+  },
+  lookAt(eye, target, up) {
+    let zx = eye[0] - target[0], zy = eye[1] - target[1], zz = eye[2] - target[2];
+    let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+    let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+    l = Math.hypot(xx, xy, xz); xx /= l; xy /= l; xz /= l;
+    const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    return new Float32Array([xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0,
+      -(xx * eye[0] + xy * eye[1] + xz * eye[2]), -(yx * eye[0] + yy * eye[1] + yz * eye[2]), -(zx * eye[0] + zy * eye[1] + zz * eye[2]), 1]);
+  },
+  multiply(a, b) {
+    const o = new Float32Array(16);
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+      let s = 0;
+      for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k];
+      o[i * 4 + j] = s;
+    }
+    return o;
+  },
+  invert(m) {
+    const inv = new Float32Array(16), a = m;
+    inv[0] = a[5] * a[10] * a[15] - a[5] * a[11] * a[14] - a[9] * a[6] * a[15] + a[9] * a[7] * a[14] + a[13] * a[6] * a[11] - a[13] * a[7] * a[10];
+    inv[4] = -a[4] * a[10] * a[15] + a[4] * a[11] * a[14] + a[8] * a[6] * a[15] - a[8] * a[7] * a[14] - a[12] * a[6] * a[11] + a[12] * a[7] * a[10];
+    inv[8] = a[4] * a[9] * a[15] - a[4] * a[11] * a[13] - a[8] * a[5] * a[15] + a[8] * a[7] * a[13] + a[12] * a[5] * a[11] - a[12] * a[7] * a[9];
+    inv[12] = -a[4] * a[9] * a[14] + a[4] * a[10] * a[13] + a[8] * a[5] * a[14] - a[8] * a[6] * a[13] - a[12] * a[5] * a[10] + a[12] * a[6] * a[9];
+    inv[1] = -a[1] * a[10] * a[15] + a[1] * a[11] * a[14] + a[9] * a[2] * a[15] - a[9] * a[3] * a[14] - a[13] * a[2] * a[11] + a[13] * a[3] * a[10];
+    inv[5] = a[0] * a[10] * a[15] - a[0] * a[11] * a[14] - a[8] * a[2] * a[15] + a[8] * a[3] * a[14] + a[12] * a[2] * a[11] - a[12] * a[3] * a[10];
+    inv[9] = -a[0] * a[9] * a[15] + a[0] * a[11] * a[13] + a[8] * a[1] * a[15] - a[8] * a[3] * a[13] - a[12] * a[1] * a[11] + a[12] * a[3] * a[9];
+    inv[13] = a[0] * a[9] * a[14] - a[0] * a[10] * a[13] - a[8] * a[1] * a[14] + a[8] * a[2] * a[13] + a[12] * a[1] * a[10] - a[12] * a[2] * a[9];
+    inv[2] = a[1] * a[6] * a[15] - a[1] * a[7] * a[14] - a[5] * a[2] * a[15] + a[5] * a[3] * a[14] + a[13] * a[2] * a[7] - a[13] * a[3] * a[6];
+    inv[6] = -a[0] * a[6] * a[15] + a[0] * a[7] * a[14] + a[4] * a[2] * a[15] - a[4] * a[3] * a[14] - a[12] * a[2] * a[7] + a[12] * a[3] * a[6];
+    inv[10] = a[0] * a[5] * a[15] - a[0] * a[7] * a[13] - a[4] * a[1] * a[15] + a[4] * a[3] * a[13] + a[12] * a[1] * a[7] - a[12] * a[3] * a[5];
+    inv[14] = -a[0] * a[5] * a[14] + a[0] * a[6] * a[13] + a[4] * a[1] * a[14] - a[4] * a[2] * a[13] - a[12] * a[1] * a[6] + a[12] * a[2] * a[5];
+    inv[3] = -a[1] * a[6] * a[11] + a[1] * a[7] * a[10] + a[5] * a[2] * a[11] - a[5] * a[3] * a[10] - a[9] * a[2] * a[7] + a[9] * a[3] * a[6];
+    inv[7] = a[0] * a[6] * a[11] - a[0] * a[7] * a[10] - a[4] * a[2] * a[11] + a[4] * a[3] * a[10] + a[8] * a[2] * a[7] - a[8] * a[3] * a[6];
+    inv[11] = -a[0] * a[5] * a[11] + a[0] * a[7] * a[9] + a[4] * a[1] * a[11] - a[4] * a[3] * a[9] - a[8] * a[1] * a[7] + a[8] * a[3] * a[5];
+    inv[15] = a[0] * a[5] * a[10] - a[0] * a[6] * a[9] - a[4] * a[1] * a[10] + a[4] * a[2] * a[9] + a[8] * a[1] * a[6] - a[8] * a[2] * a[5];
+    let det = a[0] * inv[0] + a[1] * inv[4] + a[2] * inv[8] + a[3] * inv[12];
+    det = 1 / det;
+    for (let i = 0; i < 16; i++) inv[i] *= det;
+    return inv;
+  },
+  transform(m, v) {
+    return [
+      m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12] * v[3],
+      m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13] * v[3],
+      m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14] * v[3],
+      m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15] * v[3]];
+  },
+  fromQuatPos(q, p) {
+    const [x, y, z, w] = q;
+    const x2 = x + x, y2 = y + y, z2 = z + z;
+    const xx = x * x2, xy = x * y2, xz = x * z2, yy = y * y2, yz = y * z2, zz = z * z2, wx = w * x2, wy = w * y2, wz = w * z2;
+    return new Float32Array([1 - (yy + zz), xy + wz, xz - wy, 0, xy - wz, 1 - (xx + zz), yz + wx, 0, xz + wy, yz - wx, 1 - (xx + yy), 0, p[0], p[1], p[2], 1]);
+  },
+};
+const quat = {
+  fromAxisAngle(ax, ang) {
+    const s = Math.sin(ang / 2), l = Math.hypot(ax[0], ax[1], ax[2]) || 1;
+    return [ax[0] / l * s, ax[1] / l * s, ax[2] / l * s, Math.cos(ang / 2)];
+  },
+  multiply(a, b) {
+    return [
+      a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1],
+      a[1] * b[3] + a[3] * b[1] + a[2] * b[0] - a[0] * b[2],
+      a[2] * b[3] + a[3] * b[2] + a[0] * b[1] - a[1] * b[0],
+      a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
+  },
+  normalize(q) { const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return [q[0] / l, q[1] / l, q[2] / l, q[3] / l]; },
+  rotate(q, v) {
+    const [x, y, z, w] = q;
+    const ix = w * v[0] + y * v[2] - z * v[1], iy = w * v[1] + z * v[0] - x * v[2], iz = w * v[2] + x * v[1] - y * v[0], iw = -x * v[0] - y * v[1] - z * v[2];
+    return [ix * w + iw * -x + iy * -z - iz * -y, iy * w + iw * -y + iz * -x - ix * -z, iz * w + iw * -z + ix * -y - iy * -x];
+  },
+};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry32(a) {
+  return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+
+// ---------------------------------------------------------------------------
+// Waves (CPU mirror of the GPU Gerstner sum)
+// ---------------------------------------------------------------------------
+const settings = { height: 1, chop: 0.6, len: 1, wind: 35, sun: 26 };
+const waves = [];
+const waveTargets = [];
+const waveA = new Float32Array(NW * 4);
+const waveB = new Float32Array(NW * 4);
+let maxAmp = 1;
+
+function buildWaveTargets() {
+  const rnd = mulberry32(1337);
+  const windRad = settings.wind * Math.PI / 180;
+  for (let i = 0; i < NW; i++) {
+    const ang = windRad + (rnd() - 0.5) * 1.3;
+    const u = i / (NW - 1);
+    const L = Math.exp(lerp(Math.log(5), Math.log(46), u)) * (0.85 + 0.3 * rnd()) * settings.len;
+    const k = 2 * Math.PI / L;
+    const A = L * 0.021 * settings.height * (0.75 + 0.5 * rnd());
+    const Q = A > 1e-5 ? settings.chop / (k * A * NW) : 0;
+    const ph = rnd() * Math.PI * 2;
+    waveTargets[i] = { dx: Math.cos(ang), dz: Math.sin(ang), A, k, w: Math.sqrt(G * k), Q, ph };
+    if (!waves[i]) waves[i] = { ...waveTargets[i] };
+  }
+}
+function updateWaves(dt) {
+  const f = 1 - Math.exp(-dt * 2.5);
+  let sum = 0;
+  for (let i = 0; i < NW; i++) {
+    const w = waves[i], t = waveTargets[i];
+    for (const key of ['dx', 'dz', 'A', 'k', 'w', 'Q']) w[key] = lerp(w[key], t[key], f);
+    const l = Math.hypot(w.dx, w.dz) || 1; w.dx /= l; w.dz /= l;
+    w.ph = t.ph;
+    waveA.set([w.dx, w.dz, w.A, w.k], i * 4);
+    waveB.set([w.w, w.Q, w.ph, 0], i * 4);
+    sum += w.A;
+  }
+  maxAmp = Math.max(sum, 0.05);
+}
+// Displacement and surface velocity of the water particle originating at grid point (x, z).
+function displaceAt(x, z, t, out) {
+  let dx = 0, dy = 0, dz = 0, vx = 0, vy = 0, vz = 0;
+  for (let i = 0; i < NW; i++) {
+    const w = waves[i];
+    const f = w.k * (w.dx * x + w.dz * z) - w.w * t + w.ph;
+    const s = Math.sin(f), c = Math.cos(f);
+    dx += w.Q * w.A * w.dx * c; dz += w.Q * w.A * w.dz * c; dy += w.A * s;
+    vx += w.Q * w.A * w.dx * w.w * s; vz += w.Q * w.A * w.dz * w.w * s; vy -= w.A * w.w * c;
+  }
+  out.dx = dx; out.dy = dy; out.dz = dz; out.vx = vx; out.vy = vy; out.vz = vz;
+  return out;
+}
+const _tmp = {};
+// Water height and velocity at true world position (x, z), inverting the horizontal Gerstner displacement.
+function waterAt(x, z, t, out) {
+  let px = x, pz = z;
+  for (let i = 0; i < 3; i++) {
+    displaceAt(px, pz, t, _tmp);
+    px = x - _tmp.dx; pz = z - _tmp.dz;
+  }
+  displaceAt(px, pz, t, _tmp);
+  out.h = _tmp.dy; out.vx = _tmp.vx; out.vy = _tmp.vy; out.vz = _tmp.vz;
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Geometry
+// ---------------------------------------------------------------------------
+function makeVao(setup) { const vao = gl.createVertexArray(); gl.bindVertexArray(vao); setup(); gl.bindVertexArray(null); return vao; }
+
+// Water grid: denser near the centre (where the barrels are), stretching to the fog line.
+const GRID_N = 384, GRID_HALF = 320;
+const waterVerts = new Float32Array((GRID_N + 1) * (GRID_N + 1) * 2);
+{
+  let i = 0;
+  const shape = u => Math.sign(u) * Math.pow(Math.abs(u), 1.35) * GRID_HALF;
+  for (let r = 0; r <= GRID_N; r++) for (let c = 0; c <= GRID_N; c++) {
+    waterVerts[i++] = shape(c / GRID_N * 2 - 1);
+    waterVerts[i++] = shape(r / GRID_N * 2 - 1);
+  }
+}
+const waterIdx = new Uint32Array(GRID_N * GRID_N * 6);
+{
+  let i = 0;
+  for (let r = 0; r < GRID_N; r++) for (let c = 0; c < GRID_N; c++) {
+    const a = r * (GRID_N + 1) + c, b = a + 1, d = a + GRID_N + 1, e = d + 1;
+    waterIdx[i++] = a; waterIdx[i++] = d; waterIdx[i++] = b;
+    waterIdx[i++] = b; waterIdx[i++] = d; waterIdx[i++] = e;
+  }
+}
+const waterVao = makeVao(() => {
+  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, waterVerts, gl.STATIC_DRAW);
+  const loc = waterProg.a('aPos'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, waterIdx, gl.STATIC_DRAW);
+});
+
+// Barrel: lathe profile with bulge and proud hoops, plus planked end caps.
+const BR = 0.5, BH = 1.4;
+function barrelProfile(v) {
+  let r = BR * (0.84 + 0.16 * Math.sin(Math.PI * v));
+  for (const hv of [0.09, 0.33, 0.67, 0.91]) {
+    const d = Math.abs(v - hv);
+    r += 0.022 * (1 - clamp((d - 0.026) / 0.012, 0, 1));
+  }
+  return r;
+}
+const barrelGeo = (() => {
+  const M = 120, S = 40, pos = [], nor = [], uv = [], kind = [], idx = [];
+  for (let j = 0; j <= M; j++) {
+    const v = j / M, y = (v - 0.5) * BH, r = barrelProfile(v);
+    const dr = (barrelProfile(Math.min(v + 0.002, 1)) - barrelProfile(Math.max(v - 0.002, 0))) / (0.004 * BH);
+    let nr = 1, ny = -dr; const nl = Math.hypot(nr, ny); nr /= nl; ny /= nl;
+    for (let i = 0; i <= S; i++) {
+      const u = i / S, th = u * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
+      pos.push(r * ct, y, r * st); nor.push(nr * ct, ny, nr * st); uv.push(u, v); kind.push(0);
+    }
+  }
+  for (let j = 0; j < M; j++) for (let i = 0; i < S; i++) {
+    const a = j * (S + 1) + i, b = a + 1, c = a + S + 1, d = c + 1;
+    idx.push(a, c, b, b, c, d);
+  }
+  for (const side of [-1, 1]) {
+    const y = side * BH / 2 - side * 0.03, r = barrelProfile(side > 0 ? 1 : 0) - 0.03;
+    const center = pos.length / 3;
+    pos.push(0, y, 0); nor.push(0, side, 0); uv.push(0.5, 0.5); kind.push(1);
+    for (let i = 0; i <= S; i++) {
+      const th = i / S * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
+      pos.push(r * ct, y, r * st); nor.push(0, side, 0); uv.push(ct * 0.5 + 0.5, st * 0.5 + 0.5); kind.push(1);
+    }
+    for (let i = 0; i < S; i++) {
+      const a = center + 1 + i, b = a + 1;
+      if (side > 0) idx.push(center, a, b); else idx.push(center, b, a);
+    }
+  }
+  const vao = makeVao(() => {
+    const bind = (data, name, size) => {
+      const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      const loc = barrelProg.a(name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+    };
+    bind(pos, 'aPos', 3); bind(nor, 'aNormal', 3); bind(uv, 'aUV', 2); bind(kind, 'aKind', 1);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(idx), gl.STATIC_DRAW);
+  });
+  return { vao, count: idx.length };
+})();
+
+// Splash rings (instanced quads) and spray (points)
+const MAX_RINGS = 256, MAX_POINTS = 4000;
+const ringInst = new Float32Array(MAX_RINGS * 4);
+let ringInstBuf;
+const ringVao = makeVao(() => {
+  const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const lc = ringProg.a('aCorner'); gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 2, gl.FLOAT, false, 0, 0);
+  ringInstBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ringInstBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, ringInst, gl.DYNAMIC_DRAW);
+  const li = ringProg.a('aInst'); gl.enableVertexAttribArray(li); gl.vertexAttribPointer(li, 4, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(li, 1);
+});
+const pointData = new Float32Array(MAX_POINTS * 4);
+let pointBuf;
+const pointVao = makeVao(() => {
+  pointBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.DYNAMIC_DRAW);
+  const lp = pointProg.a('aPos'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 3, gl.FLOAT, false, 16, 0);
+  const ll = pointProg.a('aLife'); gl.enableVertexAttribArray(ll); gl.vertexAttribPointer(ll, 1, gl.FLOAT, false, 16, 12);
+});
+
+// ---------------------------------------------------------------------------
+// Simulation state
+// ---------------------------------------------------------------------------
+const barrels = [];
+const rings = [];
+const spray = [];
+const dropQueue = [];
+let simTime = 0;
+
+const TINTS = [[0.58, 0.36, 0.18], [0.47, 0.28, 0.13], [0.62, 0.42, 0.22], [0.38, 0.22, 0.10], [0.52, 0.30, 0.14]];
+const PAINTS = [[0.55, 0.12, 0.10], [0.12, 0.28, 0.45], [0.16, 0.36, 0.20]];
+
+// buoyancy sample points in barrel-local space
+const SAMPLES = [];
+for (const a of [-0.42, -0.14, 0.14, 0.42]) for (let j = 0; j < 4; j++) {
+  const ang = j * Math.PI / 2 + (a > 0 ? Math.PI / 4 : 0);
+  SAMPLES.push([Math.cos(ang) * 0.55 * BR, a * BH, Math.sin(ang) * 0.55 * BR]);
+}
+const BARREL_MASS = 1, BARREL_I = 0.22, BUOYANCY = 1.75, POINT_DRAG = 0.38;
+
+function spawnBarrel(x, z, y) {
+  if (barrels.length >= MAX_BARRELS) barrels.shift();
+  const paint = Math.random() < 0.18;
+  const tint = paint ? PAINTS[Math.floor(Math.random() * PAINTS.length)] : TINTS[Math.floor(Math.random() * TINTS.length)];
+  const ax = [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5];
+  barrels.push({
+    p: [x, y ?? 11 + Math.random() * 4, z],
+    v: [(Math.random() - 0.5) * 1.5, 0, (Math.random() - 0.5) * 1.5],
+    q: quat.normalize(quat.fromAxisAngle(ax, Math.random() * Math.PI * 2)),
+    w: [(Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3],
+    tint, wh: 0, inWater: false, sub: 0,
+  });
+}
+function splash(x, z, strength) {
+  rings.push({ x, z, t0: simTime, scale: 1.4 + 2.2 * strength });
+  const n = Math.floor(25 + 70 * strength);
+  for (let i = 0; i < n; i++) {
+    if (spray.length >= MAX_POINTS) spray.shift();
+    const ang = Math.random() * Math.PI * 2, rad = Math.random() * 0.9;
+    const sp = (2.5 + 6 * strength) * (0.5 + Math.random());
+    spray.push({
+      p: [x + Math.cos(ang) * rad * 0.5, 0.2, z + Math.sin(ang) * rad * 0.5],
+      v: [Math.cos(ang) * rad * sp * 0.7, sp * (0.6 + Math.random() * 0.8), Math.sin(ang) * rad * sp * 0.7],
+      life: 1, decay: 1 / (0.5 + Math.random() * 0.8),
+    });
+  }
+}
+function dripSplash(x, z, strength) {
+  rings.push({ x, z, t0: simTime, scale: 0.7 + 0.8 * strength });
+}
+
+const _w = {};
+function physicsStep(dt) {
+  const t = simTime;
+  for (const b of barrels) {
+    let Fx = 0, Fy = -G * BARREL_MASS, Fz = 0, Tx = 0, Ty = 0, Tz = 0, subTotal = 0;
+    for (const s of SAMPLES) {
+      const r = quat.rotate(b.q, s);
+      const px = b.p[0] + r[0], py = b.p[1] + r[1], pz = b.p[2] + r[2];
+      waterAt(px, pz, t, _w);
+      const depth = _w.h - py;
+      const sub = clamp((depth + 0.28) / 0.56, 0, 1);
+      if (sub <= 0) continue;
+      subTotal += sub;
+      const fb = sub * G * BARREL_MASS * BUOYANCY / SAMPLES.length;
+      const pvx = b.v[0] + (b.w[1] * r[2] - b.w[2] * r[1]);
+      const pvy = b.v[1] + (b.w[2] * r[0] - b.w[0] * r[2]);
+      const pvz = b.v[2] + (b.w[0] * r[1] - b.w[1] * r[0]);
+      const cd = POINT_DRAG * sub;
+      const fx = -cd * (pvx - _w.vx), fy = fb - cd * (pvy - _w.vy), fz = -cd * (pvz - _w.vz);
+      Fx += fx; Fy += fy; Fz += fz;
+      Tx += r[1] * fz - r[2] * fy; Ty += r[2] * fx - r[0] * fz; Tz += r[0] * fy - r[1] * fx;
+    }
+    const subFrac = subTotal / SAMPLES.length;
+    b.sub = subFrac;
+    Fx -= 0.03 * b.v[0]; Fy -= 0.03 * b.v[1]; Fz -= 0.03 * b.v[2];
+    b.v[0] += Fx / BARREL_MASS * dt; b.v[1] += Fy / BARREL_MASS * dt; b.v[2] += Fz / BARREL_MASS * dt;
+    b.w[0] += Tx / BARREL_I * dt; b.w[1] += Ty / BARREL_I * dt; b.w[2] += Tz / BARREL_I * dt;
+    const ad = Math.max(0, 1 - dt * (0.15 + 2.5 * subFrac));
+    b.w[0] *= ad; b.w[1] *= ad; b.w[2] *= ad;
+    b.p[0] += b.v[0] * dt; b.p[1] += b.v[1] * dt; b.p[2] += b.v[2] * dt;
+    const dq = quat.multiply([b.w[0] * 0.5 * dt, b.w[1] * 0.5 * dt, b.w[2] * 0.5 * dt, 0], b.q);
+    b.q = quat.normalize([b.q[0] + dq[0], b.q[1] + dq[1], b.q[2] + dq[2], b.q[3] + dq[3]]);
+  }
+  // barrel-barrel collisions (sphere approximation)
+  const minD = 1.22, rest = 0.35;
+  for (let i = 0; i < barrels.length; i++) for (let j = i + 1; j < barrels.length; j++) {
+    const a = barrels[i], c = barrels[j];
+    const dx = c.p[0] - a.p[0], dy = c.p[1] - a.p[1], dz = c.p[2] - a.p[2];
+    const d = Math.hypot(dx, dy, dz);
+    if (d >= minD || d < 1e-5) continue;
+    const nx = dx / d, ny = dy / d, nz = dz / d, push = (minD - d) * 0.5;
+    a.p[0] -= nx * push; a.p[1] -= ny * push; a.p[2] -= nz * push;
+    c.p[0] += nx * push; c.p[1] += ny * push; c.p[2] += nz * push;
+    const vn = (c.v[0] - a.v[0]) * nx + (c.v[1] - a.v[1]) * ny + (c.v[2] - a.v[2]) * nz;
+    if (vn < 0) {
+      const imp = -(1 + rest) * vn / 2;
+      a.v[0] -= nx * imp; a.v[1] -= ny * imp; a.v[2] -= nz * imp;
+      c.v[0] += nx * imp; c.v[1] += ny * imp; c.v[2] += nz * imp;
+      a.w[0] += (Math.random() - 0.5) * imp; c.w[2] += (Math.random() - 0.5) * imp;
+    }
+  }
+}
+
+function update(dt) {
+  // queued drops
+  for (let i = dropQueue.length - 1; i >= 0; i--) {
+    dropQueue[i].t -= dt;
+    if (dropQueue[i].t <= 0) { spawnBarrel(dropQueue[i].x, dropQueue[i].z); dropQueue.splice(i, 1); }
+  }
+  // fixed-step physics
+  const step = 1 / 120;
+  let acc = Math.min(dt, 0.1), steps = 0;
+  while (acc > 1e-6 && steps < 12) {
+    const h = Math.min(step, acc);
+    physicsStep(h);
+    simTime += h; acc -= h; steps++;
+  }
+  // water level per barrel, splash detection, cleanup
+  for (let i = barrels.length - 1; i >= 0; i--) {
+    const b = barrels[i];
+    waterAt(b.p[0], b.p[2], simTime, _w);
+    b.wh = _w.h;
+    const below = b.p[1] < b.wh + 0.45;
+    if (below && !b.inWater) {
+      const speed = Math.max(0, -b.v[1]);
+      if (speed > 1.2) splash(b.p[0], b.p[2], clamp(speed / 11, 0.15, 1));
+      else dripSplash(b.p[0], b.p[2], 0.3);
+    }
+    b.inWater = below;
+    if (Math.abs(b.p[0]) > 160 || Math.abs(b.p[2]) > 160 || b.p[1] < -60) barrels.splice(i, 1);
+  }
+  // rings and spray
+  for (let i = rings.length - 1; i >= 0; i--) if (simTime - rings[i].t0 > 1.8) rings.splice(i, 1);
+  for (let i = spray.length - 1; i >= 0; i--) {
+    const s = spray[i];
+    s.v[1] -= G * dt;
+    s.v[0] *= 1 - 0.6 * dt; s.v[2] *= 1 - 0.6 * dt;
+    s.p[0] += s.v[0] * dt; s.p[1] += s.v[1] * dt; s.p[2] += s.v[2] * dt;
+    s.life -= s.decay * dt;
+    if (s.life <= 0 || s.p[1] < -maxAmp - 0.5) spray.splice(i, 1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Camera & input
+// ---------------------------------------------------------------------------
+const SUN_AZ = 0.9;
+const cam = { yaw: SUN_AZ + Math.PI + 0.35, pitch: 0.30, dist: 42, target: [0, 0, 0] };
+let W = 1, H = 1, view, proj, viewProj, invViewProj, camPos = [0, 0, 0];
+const FOV = 55 * Math.PI / 180;
+
+function updateCamera() {
+  const cp = Math.cos(cam.pitch);
+  camPos = [Math.sin(cam.yaw) * cp * cam.dist, Math.sin(cam.pitch) * cam.dist + 0.5, Math.cos(cam.yaw) * cp * cam.dist];
+  view = m4.lookAt(camPos, cam.target, [0, 1, 0]);
+  proj = m4.perspective(FOV, W / H, 0.3, 1200);
+  viewProj = m4.multiply(proj, view);
+  invViewProj = m4.invert(viewProj);
+}
+function screenToWater(px, py) {
+  const nx = px / canvas.clientWidth * 2 - 1, ny = 1 - py / canvas.clientHeight * 2;
+  const a = m4.transform(invViewProj, [nx, ny, -1, 1]), b = m4.transform(invViewProj, [nx, ny, 1, 1]);
+  const o = [a[0] / a[3], a[1] / a[3], a[2] / a[3]], f = [b[0] / b[3], b[1] / b[3], b[2] / b[3]];
+  const d = [f[0] - o[0], f[1] - o[1], f[2] - o[2]];
+  if (d[1] >= -1e-6) return null;
+  const t = -o[1] / d[1];
+  const hit = [o[0] + d[0] * t, 0, o[2] + d[2] * t];
+  if (Math.hypot(hit[0], hit[2]) > 140) return null;
+  return hit;
+}
+
+const pointers = new Map();
+let dragMoved = 0, pinchDist = 0;
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
+  dragMoved = 0;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinchDist = Math.hypot(a.x - b.x, a.y - b.y); }
+});
+canvas.addEventListener('pointermove', e => {
+  const p = pointers.get(e.pointerId);
+  if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  dragMoved += Math.abs(dx) + Math.abs(dy);
+  if (pointers.size === 1) {
+    cam.yaw -= dx * 0.005;
+    cam.pitch = clamp(cam.pitch + dy * 0.005, 0.06, 1.45);
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinchDist > 0) cam.dist = clamp(cam.dist * pinchDist / d, 8, 140);
+    pinchDist = d;
+  }
+});
+function endPointer(e) {
+  const p = pointers.get(e.pointerId);
+  pointers.delete(e.pointerId);
+  if (p && dragMoved < 6 && e.type === 'pointerup') {
+    const hit = screenToWater(e.clientX, e.clientY);
+    if (hit) spawnBarrel(hit[0], hit[2]);
+  }
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.0012), 8, 140);
+}, { passive: false });
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) { e.preventDefault(); dropRandom(); }
+});
+
+function dropRandom(delay) {
+  const ang = Math.random() * Math.PI * 2, rad = 3 + Math.random() * 10;
+  const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+  if (delay) dropQueue.push({ x, z, t: delay }); else spawnBarrel(x, z);
+}
+
+// UI wiring
+const $ = id => document.getElementById(id);
+function bindSlider(id, key, labelId, fmt) {
+  const el = $(id), label = $(labelId);
+  const apply = () => { settings[key] = parseFloat(el.value); label.textContent = fmt(settings[key]); buildWaveTargets(); };
+  el.addEventListener('input', apply);
+  apply();
+}
+bindSlider('height', 'height', 'vHeight', v => v.toFixed(2) + '×');
+bindSlider('chop', 'chop', 'vChop', v => Math.round(v * 100) + '%');
+bindSlider('len', 'len', 'vLen', v => v.toFixed(2) + '×');
+bindSlider('wind', 'wind', 'vWind', v => v + '°');
+bindSlider('sun', 'sun', 'vSun', v => v + '°');
+$('drop').addEventListener('click', () => dropRandom());
+$('drop10').addEventListener('click', () => { for (let i = 0; i < 10; i++) dropRandom(0.05 + i * 0.18); });
+$('clear').addEventListener('click', () => { barrels.length = 0; dropQueue.length = 0; });
+$('toggle').addEventListener('click', () => {
+  const ui = $('ui'); ui.classList.toggle('collapsed');
+  $('toggle').textContent = ui.classList.contains('collapsed') ? 'show' : 'hide';
+});
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.floor(canvas.clientWidth * dpr), h = Math.floor(canvas.clientHeight * dpr);
+  if (w !== canvas.width || h !== canvas.height) { canvas.width = w; canvas.height = h; }
+  W = w; H = h;
+  gl.viewport(0, 0, W, H);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------------------------------------------------------------------------
+// Lighting environment (derived from sun elevation)
+// ---------------------------------------------------------------------------
+const env = {};
+function updateEnvironment() {
+  const el = settings.sun * Math.PI / 180;
+  env.sunDir = [Math.cos(el) * Math.sin(SUN_AZ), Math.sin(el), Math.cos(el) * Math.cos(SUN_AZ)];
+  const e = Math.sin(el);
+  const day = clamp(e / 0.45, 0, 1), dusk = clamp(e / 0.12, 0, 1);
+  const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  env.sunColor = mix3(mix3([0.9, 0.25, 0.08], [1.0, 0.55, 0.22], dusk), [1.0, 0.96, 0.88], day);
+  env.sunIntensity = lerp(1.4, 3.2, day) * lerp(0.6, 1.0, dusk);
+  env.zenith = mix3(mix3([0.05, 0.06, 0.16], [0.09, 0.12, 0.32], dusk), [0.14, 0.34, 0.78], day);
+  env.horizon = mix3(mix3([0.40, 0.15, 0.14], [0.85, 0.40, 0.16], dusk), [0.45, 0.64, 0.88], day);
+  env.deep = mix3([0.012, 0.045, 0.085], [0.010, 0.055, 0.10], day);
+  env.shallow = mix3([0.05, 0.30, 0.30], [0.06, 0.42, 0.40], day);
+  env.exposure = lerp(1.0, 1.05, day);
+  env.fog = lerp(0.0045, 0.0025, day);
+}
+function setCommon(prog) {
+  gl.uniform3fv(prog.u('uSunDir'), env.sunDir);
+  gl.uniform3fv(prog.u('uSunColor'), env.sunColor);
+  gl.uniform3fv(prog.u('uZenith'), env.zenith);
+  gl.uniform3fv(prog.u('uHorizon'), env.horizon);
+  gl.uniform3fv(prog.u('uCamPos'), camPos);
+  gl.uniform1f(prog.u('uSunIntensity'), env.sunIntensity);
+  gl.uniform1f(prog.u('uTime'), simTime);
+  gl.uniform1f(prog.u('uFogDensity'), env.fog);
+  gl.uniform1f(prog.u('uExposure'), env.exposure);
+}
+function setWaves(prog) {
+  gl.uniform4fv(prog.u('uWaveA'), waveA);
+  gl.uniform4fv(prog.u('uWaveB'), waveB);
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+const barrelUniform = new Float32Array(MAX_BARRELS * 4);
+function render() {
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.BLEND);
+  gl.disable(gl.CULL_FACE);
+
+  // sky
+  gl.disable(gl.DEPTH_TEST);
+  gl.depthMask(false);
+  skyProg.use();
+  setCommon(skyProg);
+  gl.uniformMatrix4fv(skyProg.u('uInvVP'), false, invViewProj);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthMask(true);
+
+  // barrels
+  barrelProg.use();
+  setCommon(barrelProg);
+  gl.uniformMatrix4fv(barrelProg.u('uVP'), false, viewProj);
+  gl.uniform3fv(barrelProg.u('uDeepColor'), env.deep);
+  gl.bindVertexArray(barrelGeo.vao);
+  gl.enable(gl.CULL_FACE);
+  gl.cullFace(gl.BACK);
+  let n = 0;
+  for (const b of barrels) {
+    gl.uniformMatrix4fv(barrelProg.u('uModel'), false, m4.fromQuatPos(b.q, b.p));
+    gl.uniform3fv(barrelProg.u('uTint'), b.tint);
+    gl.uniform1f(barrelProg.u('uWaterLevel'), b.wh);
+    gl.drawElements(gl.TRIANGLES, barrelGeo.count, gl.UNSIGNED_INT, 0);
+    if (n < MAX_BARRELS) {
+      const presence = clamp(1 - Math.abs(b.p[1] - b.wh) / 1.4, 0, 1) * clamp(b.sub * 3, 0, 1);
+      barrelUniform.set([b.p[0], b.p[2], 0.75, presence], n * 4);
+      n++;
+    }
+  }
+  gl.disable(gl.CULL_FACE);
+
+  // water
+  waterProg.use();
+  setCommon(waterProg);
+  setWaves(waterProg);
+  gl.uniformMatrix4fv(waterProg.u('uVP'), false, viewProj);
+  gl.uniform3fv(waterProg.u('uDeepColor'), env.deep);
+  gl.uniform3fv(waterProg.u('uShallowColor'), env.shallow);
+  gl.uniform1f(waterProg.u('uMaxAmp'), maxAmp);
+  gl.uniform1f(waterProg.u('uDetail'), 0.45 + 0.55 * settings.chop);
+  gl.uniform1f(waterProg.u('uFoamStart'), 1.0 - 0.72 * settings.chop);
+  gl.uniform4fv(waterProg.u('uBarrels'), barrelUniform);
+  gl.uniform1i(waterProg.u('uBarrelCount'), n);
+  gl.bindVertexArray(waterVao);
+  gl.drawElements(gl.TRIANGLES, waterIdx.length, gl.UNSIGNED_INT, 0);
+
+  // splash rings and spray
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.depthMask(false);
+  if (rings.length) {
+    const cnt = Math.min(rings.length, MAX_RINGS);
+    for (let i = 0; i < cnt; i++) { const r = rings[rings.length - cnt + i]; ringInst.set([r.x, r.z, r.t0, r.scale], i * 4); }
+    ringProg.use();
+    setCommon(ringProg);
+    setWaves(ringProg);
+    gl.uniformMatrix4fv(ringProg.u('uVP'), false, viewProj);
+    gl.bindVertexArray(ringVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ringInstBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, ringInst, 0, cnt * 4);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, cnt);
+  }
+  if (spray.length) {
+    const cnt = spray.length;
+    for (let i = 0; i < cnt; i++) { const s = spray[i]; pointData[i * 4] = s.p[0]; pointData[i * 4 + 1] = s.p[1]; pointData[i * 4 + 2] = s.p[2]; pointData[i * 4 + 3] = s.life; }
+    pointProg.use();
+    setCommon(pointProg);
+    gl.uniformMatrix4fv(pointProg.u('uVP'), false, viewProj);
+    gl.uniform1f(pointProg.u('uPointScale'), H / (2 * Math.tan(FOV / 2)));
+    gl.bindVertexArray(pointVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, pointData, 0, cnt * 4);
+    gl.drawArrays(gl.POINTS, 0, cnt);
+  }
+  gl.depthMask(true);
+  gl.disable(gl.BLEND);
+  gl.bindVertexArray(null);
+}
+
+// ---------------------------------------------------------------------------
+// Main loop
+// ---------------------------------------------------------------------------
+buildWaveTargets();
+updateWaves(1);
+for (let i = 0; i < 6; i++) dropRandom(0.4 + i * 0.35);
+
+let last = performance.now(), fpsAcc = 0, fpsN = 0, fpsT = 0;
+const countEl = $('count'), fpsEl = $('fps');
+function frame(now) {
+  const realDt = Math.max(1e-3, (now - last) / 1000);
+  const dt = Math.min(0.05, realDt);
+  last = now;
+  updateWaves(dt);
+  update(dt);
+  updateEnvironment();
+  updateCamera();
+  render();
+  fpsAcc += realDt; fpsN++;
+  if (now - fpsT > 500) {
+    fpsEl.textContent = Math.round(fpsN / fpsAcc) + ' fps';
+    countEl.textContent = barrels.length + (barrels.length === 1 ? ' barrel' : ' barrels');
+    fpsAcc = 0; fpsN = 0; fpsT = now;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__ocean = {
+  barrels, spawnBarrel, settings, cam,
+  waterAt: (x, z) => waterAt(x, z, simTime, {}),
+  advance(seconds) { for (let s = 0; s < seconds; s += 1 / 60) update(1 / 60); },
+};
+</script>
+</body>
+</html>
