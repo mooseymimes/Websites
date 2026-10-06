@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loan Exam Calculator</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --ink:#1b1f24; --muted:#5d6672; --line:#dde2e8; --soft:#f0f3f6;
+  --accent:#1f4e8c; --accent-ink:#ffffff; --input:#ffffff;
+  --red:#b42318; --red-bg:#fdecea; --amber:#8a5a00; --amber-bg:#fff4d6;
+  --blue:#1f4e8c; --blue-bg:#e8f0fb; --green:#1a7f37; --green-bg:#e6f4ea;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101317; --panel:#181c22; --ink:#e5e8ec; --muted:#9aa3ae; --line:#2b313a; --soft:#1f242b;
+    --accent:#79a8e8; --accent-ink:#0d1117; --input:#12161b;
+    --red:#ff8f85; --red-bg:#3b1d1a; --amber:#f0c457; --amber-bg:#372c12;
+    --blue:#8fb7ef; --blue-bg:#1a2940; --green:#7fdc9d; --green-bg:#15301f;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1440px;margin:0 auto;padding:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;padding:2px 0 12px;border-bottom:2px solid var(--accent);margin-bottom:16px}
+header.top h1{font-size:20px;margin:0;letter-spacing:-.01em}
+header.top .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer;line-height:1.25}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.small{font-size:12px;padding:3px 8px}
+button.x{border:0;background:none;color:var(--muted);padding:2px 6px}
+button.x:hover{color:var(--red)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.panel h2{font-size:15px;margin:0 0 10px}
+.panel h3{font-size:13.5px;margin:16px 0 8px}
+.muted{color:var(--muted)}
+.small-text{font-size:12.5px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px 12px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+input,select,textarea{font:inherit;font-size:13.5px;color:var(--ink);background:var(--input);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}
+textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;min-height:96px;resize:vertical}
+details>summary{cursor:pointer;font-weight:600;font-size:13px;margin:14px 0 8px;color:var(--ink)}
+details>summary .muted{font-weight:400}
+.checks{list-style:none;padding:12px 0 0;margin:12px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:5px 18px;font-size:12.5px}
+.checks li{display:flex;gap:7px;align-items:baseline}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap;letter-spacing:.02em;text-transform:uppercase}
+.ok{color:var(--green);background:var(--green-bg)}
+.bad{color:var(--red);background:var(--red-bg)}
+.warn{color:var(--amber);background:var(--amber-bg)}
+.info{color:var(--blue);background:var(--blue-bg)}
+.cite{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:9px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+[hidden]{display:none!important}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:72vh}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left;vertical-align:top}
+thead th{position:sticky;top:0;background:var(--soft);font-size:11px;color:var(--muted);font-weight:600;z-index:1;text-transform:uppercase;letter-spacing:.02em}
+td.n,th.n{text-align:right}
+tr.tot td{font-weight:700;border-top:2px solid var(--line);background:var(--soft)}
+tr.syn td{background:var(--blue-bg)}
+tr.skip td{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+tr.skip td.notes{text-decoration:none}
+td.dv{color:var(--amber);background:var(--amber-bg);font-weight:700}
+td.dz{color:var(--muted)}
+td.notes{white-space:normal;min-width:210px;max-width:420px;font-size:12px}
+td.notes .tag{margin-right:4px}
+.sub{display:block;color:var(--muted);font-size:11px}
+.grid-edit td{padding:3px 4px}
+.grid-edit input,.grid-edit select{padding:4px 6px;font-size:12.5px}
+.grid-edit input.d{min-width:132px}
+.grid-edit select{min-width:170px}
+.grid-edit input.m{min-width:88px;text-align:right}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px;margin-bottom:14px}
+.card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel)}
+.card .k{font-size:11.5px;color:var(--muted)}
+.card .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.card .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.card.alert{border-color:var(--red)} .card.alert .v{color:var(--red)}
+.card.good .v{color:var(--green)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:5px 11px;background:var(--panel)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:14px 0 8px}
+.find{list-style:none;padding:0;margin:0}
+.find li{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.find li .d{color:var(--muted);font-variant-numeric:tabular-nums}
+.fgroup{margin-top:14px}
+.fgroup h3{display:flex;align-items:center;gap:8px;margin:0 0 4px}
+.note-box{border-left:3px solid var(--accent);background:var(--blue-bg);padding:9px 12px;border-radius:0 6px 6px 0;font-size:13px;margin:10px 0}
+.note-box.warnbox{border-left-color:var(--amber);background:var(--amber-bg)}
+.rules td{white-space:normal;vertical-align:top}
+.rules td:first-child{font-weight:600;white-space:nowrap}
+.explain{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.explain .panel{margin:0}
+.explain p{margin:6px 0;font-size:13px}
+footer{color:var(--muted);font-size:12px;margin:8px 0 24px}
+@media (max-width:640px){
+  .wrap{padding:12px}
+  .checks{grid-template-columns:1fr}
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .find li{grid-template-columns:1fr}
+  .card .v{font-size:18px}
+}
+@media print{
+  body{background:#fff;color:#000}
+  .noprint,.tabs,#tab-amort,#tab-rules,#inputPanel,#matchPanel{display:none!important}
+  .tablewrap{max-height:none;overflow:visible;border:0}
+  .panel{border:0;padding:0}
+  thead th{position:static}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Consumer Finance Loan Exam Calculator</h1>
+    <div class="sub">Va. Code Title 6.2, Ch. 15 &middot; 10VAC5-60 &middot; recompute transaction histories, check system accuracy, flag overcharges</div>
+  </div>
+  <div class="btns noprint">
+    <button id="btnExample">Load example</button>
+    <button id="btnSave">Save case</button>
+    <button id="btnLoad">Open case</button>
+    <input type="file" id="fileCase" accept=".json,application/json" hidden>
+    <button id="btnReset">Clear all</button>
+  </div>
+</header>
+
+<!-- ============ LOAN TERMS ============ -->
+<section class="panel" id="termsPanel">
+  <h2>Loan terms</h2>
+  <div class="fgrid">
+    <label class="f">Contract (loan) date<input type="date" id="loanDate"></label>
+    <label class="f">Principal amount<input id="principal" inputmode="decimal" placeholder="2,000.00"></label>
+    <label class="f">Contract rate (%)<input id="rate" inputmode="decimal" placeholder="35.99"></label>
+    <label class="f">First payment due<input type="date" id="firstDue"></label>
+    <label class="f">Number of payments<input id="nPay" inputmode="numeric" placeholder="12"></label>
+    <label class="f">Scheduled payment<input id="payment" inputmode="decimal" placeholder="blank = compute"></label>
+    <label class="f">Loan processing fee<input id="procFee" inputmode="decimal" placeholder="0.00"></label>
+    <label class="f">Late fee in contract<input id="lateFee" inputmode="decimal" value="20"></label>
+    <label class="f">Late fee grace (days)<input id="grace" inputmode="numeric" value="10"></label>
+    <label class="f">Returned-check fee<input id="nsfFee" inputmode="decimal" value="25"></label>
+    <label class="f">Payment application
+      <select id="order">
+        <option value="ifp">Int → Fees → Prin</option>
+        <option value="fip">Fees → Int → Prin</option>
+        <option value="ipf">Int → Prin → Fees</option>
+      </select></label>
+    <label class="f">Payoff / as-of date<input type="date" id="asOf"></label>
+  </div>
+
+  <details open>
+    <summary>Calculation conventions <span class="muted">— set these to match the lender's system</span></summary>
+    <div class="fgrid">
+      <label class="f">Day basis
+        <select id="basis">
+          <option value="365">365-day year</option>
+          <option value="360">360-day year</option>
+          <option value="actual">Actual 365/366</option>
+        </select></label>
+      <label class="f">Day count
+        <select id="dayCount">
+          <option value="excl">Days elapsed</option>
+          <option value="incl">Inclusive (+1 day)</option>
+        </select></label>
+      <label class="f">Interest rounding
+        <select id="rounding">
+          <option value="round">Round per transaction</option>
+          <option value="trunc">Truncate per transaction</option>
+          <option value="perdiem">Per-diem rounded × days</option>
+          <option value="perdiemTrunc">Per-diem truncated × days</option>
+          <option value="exact">No rounding</option>
+        </select></label>
+      <label class="f">Interest start date<input type="date" id="intStart" title="Only if interest starts on a different date than the contract date (e.g. funding date)"></label>
+      <label class="f">System "balance" column is
+        <select id="balMeaning">
+          <option value="prin">Principal only</option>
+          <option value="total">Prin + int + fees</option>
+        </select></label>
+      <label class="f">Compare to system
+        <select id="compare">
+          <option value="running">Running recompute</option>
+          <option value="resync">Row-by-row</option>
+        </select></label>
+      <label class="f">Variance tolerance ($)<input id="tol" inputmode="decimal" value="0.01"></label>
+    </div>
+  </details>
+
+  <details>
+    <summary>Special events <span class="muted">— maturity, bankruptcy, death, judgment</span></summary>
+    <div class="fgrid">
+      <label class="f">Maturity date override<input type="date" id="maturity"></label>
+      <label class="f">Bankruptcy adjudication<input type="date" id="bk"></label>
+      <label class="f">Borrower date of death<input type="date" id="death"></label>
+      <label class="f">Judgment date<input type="date" id="judg"></label>
+      <label class="f">Judgment amount<input id="judgAmt" inputmode="decimal" placeholder="blank = balance owed"></label>
+      <label class="f">Judgment rate (%)<input id="judgRate" inputmode="decimal" placeholder="blank = higher of contract or 6"></label>
+    </div>
+    <p class="muted small-text" style="margin:8px 0 0">Maturity defaults to the last scheduled due date. Use an override if the loan was deferred.</p>
+  </details>
+
+  <ul class="checks" id="checks"></ul>
+</section>
+
+<!-- ============ TABS ============ -->
+<nav class="tabs noprint" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="history">Transaction history review</button>
+  <button role="tab" aria-selected="false" data-tab="amort">Amortization schedule</button>
+  <button role="tab" aria-selected="false" data-tab="rules">Rules &amp; notes</button>
+</nav>
+
+<!-- ============ HISTORY TAB ============ -->
+<section id="tab-history" class="tabpane">
+
+  <div class="panel" id="inputPanel">
+    <h2>Transactions</h2>
+    <p class="muted small-text" style="margin:0 0 8px">Paste from Excel or the system report. A header row works best (e.g. <b>Date, Type, Amount, Interest, Principal, Fees, Balance</b>). Without headers, columns are read as Date, [Type], Amount, Interest, Principal, [Fees], Balance. Interest / Principal / Fees / Balance are the <em>system's</em> figures and are optional.</p>
+    <textarea id="paste" placeholder="Date	Type	Amount	Interest	Principal	Balance
+02/14/2025	Payment	199.58	57.18	142.40	1857.60
+06/20/2025	Principal Only	150.00	0.00	150.00	1220.13"></textarea>
+    <div class="btns" style="margin-top:8px">
+      <button class="primary" id="btnReplace">Load pasted rows</button>
+      <button id="btnAppend">Append pasted rows</button>
+      <button id="btnAdd">Add blank row</button>
+      <span class="muted small-text" id="pasteMsg"></span>
+    </div>
+    <details open id="gridDetails">
+      <summary>Edit rows <span class="muted" id="rowCount"></span></summary>
+      <div class="tablewrap" style="max-height:46vh">
+        <table class="grid-edit">
+          <thead><tr><th>#</th><th>Date</th><th>Type</th><th class="n">Amount</th><th class="n">Sys interest</th><th class="n">Sys principal</th><th class="n">Sys fees</th><th class="n">Sys balance</th><th></th></tr></thead>
+          <tbody id="gridBody"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel" id="matchPanel">
+    <h2>Match system settings</h2>
+    <p class="muted small-text" style="margin:0 0 10px">Unexplained differences with the right rate and dates usually come from conventions: 360 vs 365-day year, counting an extra day per period, how interest is rounded, payment application order, or the interest start date. This tries every combination against the system's figures (each row checked on its own) and shows which reproduces them.</p>
+    <button class="primary" id="btnMatch">Find matching settings</button>
+    <div id="matchOut"></div>
+  </div>
+
+  <div class="panel" id="resultsPanel">
+    <h2>Results</h2>
+    <div id="results"><p class="muted">Enter the loan terms and add transactions to see results.</p></div>
+  </div>
+</section>
+
+<!-- ============ AMORTIZATION TAB ============ -->
+<section id="tab-amort" class="tabpane" hidden>
+  <div class="panel">
+    <h2>Amortization schedule</h2>
+    <div class="fgrid" style="margin-bottom:10px">
+      <label class="f">Interest method
+        <select id="amMethod">
+          <option value="actual">Days elapsed</option>
+          <option value="unit">Equal periods (rate ÷ 12)</option>
+        </select></label>
+    </div>
+    <div class="btns noprint" style="margin-bottom:12px">
+      <button id="btnAmToHist">Use as transaction history</button>
+      <button id="btnAmCsv">Download CSV</button>
+      <button id="btnAmCheck">Check a lender's schedule →</button>
+    </div>
+    <div id="amortOut"></div>
+  </div>
+</section>
+
+<!-- ============ RULES TAB ============ -->
+<section id="tab-rules" class="tabpane" hidden>
+  <div class="explain" style="margin-bottom:16px">
+    <div class="panel">
+      <h2>Why the balance only goes down</h2>
+      <p>The balance column is the <b>principal</b> balance. Chapter 15 loans are simple interest: interest is figured only on unpaid principal, never added on and never compounded (§ 6.2-1520 A). Interest builds up on the side and is paid off by the next payment, so principal can only fall.</p>
+      <p>If a payment doesn't cover the interest accrued, the shortfall stays as <em>unpaid interest</em>. It still isn't added to the balance.</p>
+    </div>
+    <div class="panel">
+      <h2>"Principal only" rows</h2>
+      <p>Money applied 100% to principal, skipping accrued interest. The interest isn't lost; it carries forward and the next regular payment collects it, which is why that next payment shows more interest than usual.</p>
+      <p>Common sources: extra payments the borrower designated, processing-fee rebates (§ 6.2-1520 C), refunds of excess charges credited to the account (§ 6.2-1542 A), or insurance refunds. Trace each to support.</p>
+    </div>
+    <div class="panel">
+      <h2>Why small differences show up</h2>
+      <p>On $2,000 at 36%, a 360-day year adds about $0.82 a month over a 365-day year, and counting one extra day adds about $1.97 a period. Over a year those become the "$8 for no reason" differences.</p>
+      <p>Use <b>Find matching settings</b> first. Whatever is left after the conventions match is a real difference in the data. Note: an extra day per period isn't "days elapsed," so the statutory recompute never uses it.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Limits applied by the calculator</h2>
+    <div class="tablewrap" style="max-height:none">
+    <table class="rules">
+      <thead><tr><th>Item</th><th>Rule</th><th>Cite</th></tr></thead>
+      <tbody>
+        <tr><td>Loan size &amp; term</td><td>$300 to $35,000; term of 6 to 120 months; at least six substantially equal consecutive payments.</td><td class="cite">§ 6.2-1520 A</td></tr>
+        <tr><td>Interest</td><td>Single annual rate up to 36%. Simple interest on unpaid principal only — no add-on, no compounding. Computed on days elapsed; a day may be 1/360 or 1/365 of a year.</td><td class="cite">§ 6.2-1520 A</td></tr>
+        <tr><td>Refinance</td><td>New principal may include unpaid interest on the prior loan accrued within 90 days before the new loan.</td><td class="cite">§ 6.2-1520 A</td></tr>
+        <tr><td>Late fee</td><td>$20 when a payment or part of one isn't received and applied within 10 days of the due date. Once per scheduled installment. Must be stated in the contract.</td><td class="cite">§ 6.2-1520 B</td></tr>
+        <tr><td>Processing fee</td><td>Up to the greater of $50 or 6% of principal, never more than $150; not interest. If paid in full within 30 days, rebate everything except the lesser of $50 or the fee. On a refinance or renewal, at most one new fee per 12 months.</td><td class="cite">§ 6.2-1520 C</td></tr>
+        <tr><td>Recording fees</td><td>Actual fees to file, record, or release the security interest.</td><td class="cite">§ 6.2-1520 D</td></tr>
+        <tr><td>Other charges</td><td>None, except: insurance premiums actually paid out; GAP waivers and GAP insurance; actual recording fees (or, on loans over $100, non-filing insurance no greater than those fees); and a returned-check handling fee up to $25.</td><td class="cite">§ 6.2-1523</td></tr>
+        <tr><td>Prepayment</td><td>Must be allowed in full or in amounts of one or more full installments. May be applied first to amounts due and unpaid.</td><td class="cite">§ 6.2-1524 F</td></tr>
+        <tr><td>Installments</td><td>Substantially equal monthly installments of principal and interest. An odd first period up to 45 days, with a larger first payment, is allowed.</td><td class="cite">§ 6.2-1524 K</td></tr>
+        <tr><td>Late payments</td><td>A licensee may accept a late payment or treat it as timely, but may not charge anything beyond what the Act allows.</td><td class="cite">10VAC5-60-20 F</td></tr>
+        <tr><td>Bankruptcy</td><td>6% interest starting 90 days after adjudication, if the loan is properly scheduled. Exceptions for a co-maker not in bankruptcy when the bankrupt isn't entitled to a discharge, and for non-dischargeable debts.</td><td class="cite">§ 6.2-1522 A</td></tr>
+        <tr><td>Death of borrower</td><td>After 90 days from death, only 6% interest on unpaid principal; no other charges.</td><td class="cite">§ 6.2-1522 B</td></tr>
+        <tr><td>After maturity</td><td>Starting six months after maturity (original or as deferred), only 6% interest; no other charges.</td><td class="cite">§ 6.2-1522 C</td></tr>
+        <tr><td>Judgment</td><td>From judgment, only court costs, attorney fees, and interest at the judgment rate (for a contract claim, the contract rate or 6%, whichever is higher).</td><td class="cite">§ 6.2-1521; § 6.2-302</td></tr>
+        <tr><td>Pre-2021 loans</td><td>Loans made before January 1, 2021 may be collected under their original terms if those terms were lawful when made.</td><td class="cite">10VAC5-60-20 K</td></tr>
+        <tr><td>Excess charges</td><td>Must be refunded or credited. Licensee owes twice the excess plus costs and attorney fees, unless it was a bona fide computation error not made in a regular course of dealing.</td><td class="cite">§ 6.2-1542</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>How the calculator works</h2>
+    <ul class="small-text" style="margin:0;padding-left:18px">
+      <li><b>As posted (math check):</b> recomputes every transaction exactly as posted, using your convention settings. Differences from the system's figures are calculation accuracy issues.</li>
+      <li><b>Statutory limits:</b> same history, but always uses days elapsed, caps the rate at 36%, drops unsupported late fees (no installment over 10 days past due, or already charged), caps late/returned-check/processing fees, applies 6% after maturity + 6 months, death + 90 days, or bankruptcy + 90 days, and the judgment rate after judgment.</li>
+      <li><b>Reversals:</b> a reversal is matched to the latest earlier payment of the same amount, and that payment is treated as never received.</li>
+      <li><b>Late-fee test:</b> an installment is satisfied when cumulative regular payments received by the due date + grace days cover cumulative scheduled payments. Principal-only payments don't count toward installments.</li>
+      <li><b>Excess collected</b> = interest + fees collected per the system (or the as-posted recompute if system figures are blank) minus interest + fees collectible under the statutory recompute.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Statute and regulation text checked against law.lis.virginia.gov, October 2026. A calculation aid for examiners, not a legal determination. Data stays in this file on your device.</footer>
+</div>
+
+<script>
+'use strict';
+/* ================= utilities ================= */
+const DAY = 86400000;
+function r2(x){ return Math.round(x*100 + (x>=0?1e-7:-1e-7))/100; }
+function t2(x){ return Math.trunc(x*100 + (x>=0?1e-7:-1e-7))/100; }
+function grp(v){ const s=Math.abs(v).toFixed(2), k=s.indexOf('.'); return s.slice(0,k).replace(/\B(?=(\d{3})+(?!\d))/g,',')+s.slice(k); }
+function fmt(x){ if(x==null||isNaN(x)) return ''; const v=r2(x); return (v<0?'−':'')+grp(v); }
+function money(x){ if(x==null||isNaN(x)) return ''; const v=r2(x); return (v<0?'−':'')+'$'+grp(v); }
+function signed(x){ const v=r2(x); return (v>0?'+':'')+fmt(v); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function has(x){ return x!=null && !isNaN(x); }
+
+function dn(y,m,d){ return Math.round(Date.UTC(y,m-1,d)/DAY); }
+function ymd(n){ const t=new Date(n*DAY); return [t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate()]; }
+function pad(x){ return String(x).padStart(2,'0'); }
+function iso(n){ if(n==null||isNaN(n)) return ''; const [y,m,d]=ymd(n); return `${y}-${pad(m)}-${pad(d)}`; }
+function us(n){ if(n==null||isNaN(n)) return ''; const [y,m,d]=ymd(n); return `${m}/${d}/${y}`; }
+function isLeap(y){ return (y%4===0&&y%100!==0)||y%400===0; }
+function addMonthsA(y,m,d,k){ let mi=(m-1)+k; const yy=y+Math.floor(mi/12); mi=((mi%12)+12)%12; const last=new Date(Date.UTC(yy,mi+1,0)).getUTCDate(); return dn(yy,mi+1,Math.min(d,last)); }
+function addMonths(n,k){ const [y,m,d]=ymd(n); return addMonthsA(y,m,d,k); }
+function validDate(y,m,d){ if(m<1||m>12||d<1||d>31) return null; const n=dn(y,m,d); const [a,b,c]=ymd(n); return (a===y&&b===m&&c===d)?n:null; }
+function parseDate(s){
+  if(s==null) return null; if(typeof s==='number') return s;
+  s=String(s).trim(); if(!s) return null; let m;
+  if((m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return validDate(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})\b/))){ let y=+m[3]; if(y<100) y+=(y<70?2000:1900); return validDate(y,+m[1],+m[2]); }
+  if(/^\d{8}$/.test(s)) return validDate(+s.slice(0,4),+s.slice(4,6),+s.slice(6,8));
+  if(/^\d{5}(\.\d+)?$/.test(s)){ const v=Math.floor(+s); if(v>20000&&v<80000) return dn(1899,12,30)+v; }
+  const mon='(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+  if(new RegExp('^'+mon+'\\s+\\d{1,2},?\\s+\\d{4}','i').test(s)||new RegExp('^\\d{1,2}[-\\s]'+mon+'[-\\s]\\d{2,4}','i').test(s)){
+    const t=Date.parse(s.replace(/-/g,' ')); if(!isNaN(t)){ const dt=new Date(t); return dn(dt.getFullYear(),dt.getMonth()+1,dt.getDate()); }
+  }
+  return null;
+}
+function num(s){
+  if(s==null) return NaN; if(typeof s==='number') return s;
+  s=String(s).trim().replace(/[\u2212\u2013]/g,'-');
+  if(!s||s==='-'||s==='\u2014') return NaN;
+  let neg=false;
+  if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1);}
+  if(/cr$/i.test(s)){neg=true;s=s.slice(0,-2);}
+  if(/-$/.test(s)){neg=true;s=s.slice(0,-1);}
+  s=s.replace(/[$,%\s]/g,'');
+  if(s===''||s==='-') return NaN;
+  const v=Number(s); if(isNaN(v)) return NaN; return neg?-v:v;
+}
+
+/* ================= transaction types ================= */
+const TYPES=[['PMT','Payment'],['PRIN','Principal-only payment'],['CREDIT','Credit / rebate / refund'],['LATE','Late fee'],['NSF','Returned-check fee'],['REV','Payment reversal'],['FEE','Other fee (recording, insurance, GAP)'],['PROC','Processing fee'],['COST','Court costs / attorney fees'],['WAIVE_FEE','Fee waiver'],['WAIVE_INT','Interest waiver']];
+const TYPE_LABEL=Object.fromEntries(TYPES); TYPE_LABEL.JDG='Judgment';
+const FEE_TYPES=new Set(['LATE','NSF','FEE','PROC','COST']);
+const PAY_TYPES=new Set(['PMT','PRIN','CREDIT']);
+function normType(s){
+  s=String(s||'').trim(); if(!s) return 'PMT';
+  const up=s.toUpperCase(); if(TYPE_LABEL[up]&&up!=='JDG') return up;
+  const l=s.toLowerCase();
+  if(/prin(cipal)?\.?\s*(only|curtail|reduc)|curtail/.test(l)) return 'PRIN';
+  if(/late/.test(l)) return 'LATE';
+  if(/(nsf|return|bounce|insuff).*(fee|chg|charge)|(fee|chg|charge).*(nsf|return)/.test(l)) return 'NSF';
+  if(/revers|nsf|returned|bounce|chargeback|void/.test(l)) return 'REV';
+  if(/waiv|forgiv/.test(l)) return /int/.test(l)?'WAIVE_INT':'WAIVE_FEE';
+  if(/process|orig/.test(l)) return 'PROC';
+  if(/court|attorney|atty|legal/.test(l)) return 'COST';
+  if(/rebate|refund|credit|adj/.test(l)) return 'CREDIT';
+  if(/fee|record|filing|insur|gap|premium|charge/.test(l)) return 'FEE';
+  return 'PMT';
+}
+
+/* ================= paste parsing ================= */
+function splitCSV(line){ const out=[]; let cur='', q=false; for(const ch of line){ if(ch==='"'){q=!q;} else if(ch===','&&!q){out.push(cur.trim());cur='';} else cur+=ch; } out.push(cur.trim()); return out; }
+function tokenize(line){
+  const toks=line.trim().split(/\s+/); const out=[toks[0]]; let i=toks.length; const nums=[];
+  while(i>1 && !isNaN(num(toks[i-1]))){ nums.unshift(toks[i-1]); i--; }
+  const mid=toks.slice(1,i).join(' '); if(mid) out.push(mid);
+  return out.concat(nums);
+}
+function splitLine(l){
+  if(l.includes('\t')) return l.split('\t').map(s=>s.trim());
+  if(l.includes(',') && (/"/.test(l) || !/\d,\d{3}/.test(l))) return splitCSV(l);
+  const two=l.trim().split(/\s{2,}/); if(two.length>=3) return two;
+  return tokenize(l);
+}
+function headerMap(h){
+  const m={};
+  h.forEach((c,i)=>{ const s=c.toLowerCase(); const set=k=>{ if(m[k]==null) m[k]=i; };
+    if(!s) return;
+    if(/bal/.test(s)){ if(m.bal==null||/prin/.test(s)) m.bal=i; return; }
+    if(/int/.test(s)) return set('int');
+    if(/prin/.test(s)) return set('prin');
+    if(/fee|late ?ch|charge/.test(s)) return set('fee');
+    if(/effect/.test(s)){ m.date=i; return; }
+    if(/date|posted|^dt$/.test(s)) return set('date');
+    if(/type|desc|code|memo|categ/.test(s)) return set('type');
+    if(/amount|amt|payment|pmt|paid|total|receipt|tran/.test(s)) return set('amount');
+  });
+  return m;
+}
+function mkTxn(date,typeTxt,amount,int,prin,fee,bal){
+  const t={date,type:normType(typeTxt),desc:String(typeTxt||'').trim(),amount:has(amount)?Math.abs(amount):NaN,sysInt:has(int)?int:null,sysPrin:has(prin)?prin:null,sysFee:has(fee)?fee:null,sysBal:has(bal)?bal:null};
+  if(!has(t.amount)){ const parts=[t.sysInt,t.sysPrin,t.sysFee].filter(has); if(parts.length) t.amount=r2(parts.reduce((a,b)=>a+Math.abs(b),0)); }
+  if(PAY_TYPES.has(t.type)){ ['sysInt','sysPrin','sysFee'].forEach(k=>{ if(has(t[k])) t[k]=Math.abs(t[k]); }); }
+  return t;
+}
+function parsePaste(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()); if(!lines.length) return {rows:[],skipped:0};
+  const first=splitLine(lines[0]); let map=null, start=0;
+  if(parseDate(first[0])==null && first.some(c=>/date|amount|payment|interest|principal|balance|type|fee/i.test(c))){ map=headerMap(first); start=1; }
+  const rows=[]; let skipped=0;
+  for(let i=start;i<lines.length;i++){
+    const c=splitLine(lines[i]); let t=null;
+    if(map && map.date!=null){
+      const g=k=>map[k]!=null?c[map[k]]:undefined;
+      const d=parseDate(g('date'));
+      if(d!=null) t=mkTxn(d,g('type'),num(g('amount')),num(g('int')),num(g('prin')),num(g('fee')),num(g('bal')));
+    } else {
+      const d=parseDate(c[0]);
+      if(d!=null){
+        let rest=c.slice(1), typeTxt='';
+        if(rest.length && rest[0]!=='' && isNaN(num(rest[0]))){ typeTxt=rest[0]; rest=rest.slice(1); }
+        const n=rest.map(num), k=rest.length;
+        if(k<=1) t=mkTxn(d,typeTxt,n[0]);
+        else if(k===2) t=mkTxn(d,typeTxt,n[0],NaN,NaN,NaN,n[1]);
+        else if(k===3) t=mkTxn(d,typeTxt,n[0],n[1],n[2]);
+        else if(k===4) t=mkTxn(d,typeTxt,n[0],n[1],n[2],NaN,n[3]);
+        else t=mkTxn(d,typeTxt,n[0],n[1],n[2],n[3],n[4]);
+      }
+    }
+    if(t && has(t.amount)) rows.push(t); else skipped++;
+  }
+  return {rows,skipped};
+}
+
+/* ================= interest engine ================= */
+function derive(T){
+  T.dues=[];
+  if(T.firstDue!=null && T.nPay>0){ const [y,m,d]=ymd(T.firstDue); for(let k=0;k<T.nPay;k++) T.dues.push({date:addMonthsA(y,m,d,k)}); }
+  T.maturityEff = T.maturity!=null ? T.maturity : (T.dues.length ? T.dues[T.dues.length-1].date : null);
+  const am = amortize(T,'actual', T.payment>0 ? T.payment : null);
+  T.solvedPayment = am ? am.payment : 0;
+  T.levelPayment = T.payment>0 ? ((amortize(T,'actual',null)||{}).payment||0) : T.solvedPayment;
+  T.schedAmts = am ? am.rows.map(r=>r.pay) : [];
+  return T;
+}
+function legalEvents(T){
+  return {
+    postMat: T.maturityEff!=null ? addMonths(T.maturityEff,6) : null,
+    death: T.death!=null ? T.death+90 : null,
+    bk: T.bk!=null ? T.bk+90 : null,
+    judg: T.judg!=null ? T.judg : null,
+    judgRate: (has(T.judgRate)&&T.judgRate>0) ? T.judgRate : Math.max(6, Math.min(+T.rate||0,36))
+  };
+}
+function rateFn(T,enforce,E){
+  const base = enforce ? Math.min(+T.rate||0,36) : (+T.rate||0);
+  if(!enforce) return {fn:()=>base, bounds:[]};
+  const low=Math.min(base,6);
+  return {
+    fn:d=>{ if(E.judg!=null&&d>=E.judg) return E.judgRate; if((E.postMat!=null&&d>=E.postMat)||(E.death!=null&&d>=E.death)||(E.bk!=null&&d>=E.bk)) return low; return base; },
+    bounds:[E.postMat,E.death,E.bk,E.judg].filter(x=>x!=null)
+  };
+}
+function accrue(prin,a,b,T,R){
+  const span=b-a;
+  if(!(span>0) || !(prin>0)) return {interest:0, days:Math.max(0,span||0), span:Math.max(0,span||0), rateLabel:''};
+  const extra = T.dayCount==='incl' ? 1 : 0;
+  let cuts=[a,b];
+  R.bounds.forEach(x=>{ if(x>a&&x<b) cuts.push(x); });
+  if(T.basis==='actual'){ const y0=ymd(a)[0], y1=ymd(b)[0]; for(let y=y0+1;y<=y1;y++){ const j=dn(y,1,1); if(j>a&&j<b) cuts.push(j); } }
+  cuts=[...new Set(cuts)].sort((x,y)=>x-y);
+  let raw=0, pd=0; const rates=new Set();
+  for(let i=0;i<cuts.length-1;i++){
+    const s=cuts[i]; let nd=cuts[i+1]-s; if(i===cuts.length-2) nd+=extra;
+    const rate=R.fn(s); rates.add(rate);
+    const den = T.basis==='360' ? 360 : (T.basis==='actual' ? (isLeap(ymd(s)[0])?366:365) : 365);
+    const daily = prin*rate/100/den;
+    raw += daily*nd;
+    pd += (T.rounding==='perdiemTrunc' ? t2(daily) : r2(daily))*nd;
+  }
+  let interest;
+  switch(T.rounding){
+    case 'trunc': interest=t2(raw); break;
+    case 'perdiem': case 'perdiemTrunc': interest=r2(pd); break;
+    case 'exact': interest=raw; break;
+    default: interest=r2(raw);
+  }
+  return {interest, days:span+extra, span, rateLabel: rates.size===1 ? [...rates][0] : 'mixed'};
+}
+function barReason(d,E,type,T){
+  if(E.judg!=null && d>=E.judg && type!=='COST') return {text:`after the judgment of ${us(E.judg)}`, cite:'§ 6.2-1521'};
+  if(E.postMat!=null && d>=E.postMat) return {text:`six or more months after maturity (${us(T.maturityEff)})`, cite:'§ 6.2-1522 C'};
+  if(E.death!=null && d>=E.death) return {text:`more than 90 days after the borrower's death`, cite:'§ 6.2-1522 B'};
+  return null;
+}
+function compareRow(row,t,T){
+  if(row.skip||row.synthetic) return;
+  const v={};
+  if(PAY_TYPES.has(row.type)){
+    if(has(t.sysInt)) v.int=r2(t.sysInt-row.int);
+    if(has(t.sysPrin)) v.prin=r2(t.sysPrin-row.prin);
+    if(has(t.sysFee)) v.fee=r2(t.sysFee-row.fee);
+  } else if(FEE_TYPES.has(row.type) && has(t.sysFee) && t.sysFee!==0){
+    v.fee=r2(Math.abs(t.sysFee)-(row.assessed||0));
+  }
+  if(has(t.sysBal)) v.bal=r2(t.sysBal-(T.balMeaning==='total'?row.total:row.bal));
+  if(Object.keys(v).length){ row.v=v; row.bad=Object.values(v).some(x=>Math.abs(x)>T.tol+1e-9); }
+}
+/* hs = interest period since the last payment that cleared interest:
+   B = principal at the start (system's own balance when known), span = actual days elapsed */
+function diagnose(row,t,T,hs){
+  if(row.type!=='PMT'||!row.v||!has(row.v.int)||Math.abs(row.v.int)<=T.tol) return '';
+  if(!hs.ok||!(hs.B>0)||!(hs.span>0)||typeof row.rate!=='number'||!(row.rate>0)||!has(t.sysInt)||!(t.sysInt>0)) return '';
+  if(t.sysInt>=row.amount-0.005) return '';
+  const rate=row.rate, d=hs.span, B=hs.B, si=t.sysInt;
+  const near=x=>Math.abs(x-si)<=Math.max(T.tol,0.015);
+  const pd=den=>B*rate/100/den;
+  const denT=T.basis==='360'?360:365;
+  const from=hs.fromSys?'the system\'s prior balance':'the prior balance';
+  if(hs.fromSys && near(pd(denT)*d)) return `system interest is right for its own prior balance (${money(B)}, ${d} days) — the difference carries from an earlier row`;
+  for(const den of [360,365,366]) if(den!==denT && near(pd(den)*d)) return `system interest matches a ${den}-day year (${d} days on ${money(B)})`;
+  for(const den of [denT,denT===360?365:360]) for(const dd of [1,-1,2,-2,3,-3,4,-4,5,-5,6,-6,7,-7].map(k=>d+k)){
+    if(dd>0 && near(pd(den)*dd)) return `system interest equals ${dd} days at 1/${den} (actual days elapsed: ${d})${dd===d+1?' — looks like both the start and end dates are counted':' — check the payment or effective date'}`;
+  }
+  if(near(r2(pd(denT))*d)) return 'system rounds the daily interest to the cent before multiplying by days';
+  if(near(t2(pd(denT))*d)) return 'system truncates the daily interest to the cent before multiplying by days';
+  const impRate=si/(B*d/denT)*100;
+  return isFinite(impRate)?`implied rate ${impRate.toFixed(3)}% (1/${denT}, ${d} days on ${from} ${money(B)})`:'';
+}
+
+function run(T0,input,enforce,opt){
+  opt=opt||{};
+  const T = enforce ? Object.assign({},T0,{dayCount:'excl'}) : T0;
+  const anchor = !enforce && T.compare==='resync';
+  const E=legalEvents(T), R=rateFn(T,enforce,E);
+  const L=input.map((t,i)=>Object.assign({},t,{i})).filter(t=>t.date!=null && TYPE_LABEL[t.type] && t.type!=='JDG');
+  L.sort((a,b)=>a.date-b.date||a.i-b.i);
+  L.forEach((t,k)=>{
+    if(t.type!=='REV') return; const amt=Math.abs(+t.amount||0);
+    for(let j=k-1;j>=0;j--){ const p=L[j];
+      if(PAY_TYPES.has(p.type) && !p.revBy && Math.abs(Math.abs(+p.amount||0)-amt)<0.005){ p.revBy=t; t.revOf=p; for(let q=j+1;q<k;q++) L[q].inRevWindow=true; break; } }
+  });
+  const G=Math.max(10, has(T.grace)?T.grace:10);
+  const pays=L.filter(t=>t.type==='PMT'&&!t.revBy&&t.amount>0);
+  const cumBy=d=>pays.reduce((s,t)=>t.date<=d?s+Math.abs(t.amount):s,0);
+  // installment amounts for the late-fee test: contract payment if entered, else the most common payment in the history
+  let schedAmts=T.schedAmts||[], schedNote=null;
+  if(enforce && !(T.payment>0) && pays.length){
+    const cnt={}; pays.forEach(t=>{ const k=r2(Math.abs(t.amount)).toFixed(2); cnt[k]=(cnt[k]||0)+1; });
+    const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    if(best && best[1]>=2){ const am=amortize(T,'actual',+best[0]); if(am){ schedAmts=am.rows.map(r=>r.pay); schedNote=`Late fees tested against a scheduled payment of ${money(+best[0])} (the most common payment in the history). Enter the contract payment above if it differs.`; } }
+    else if(T.solvedPayment>0) schedNote=`Late fees tested against a computed payment of ${money(T.solvedPayment)}. Enter the contract payment above for an exact test.`;
+  }
+  let cumReq=0;
+  const dues=!enforce?[]:(T.dues||[]).map((d,k)=>{ cumReq+=(schedAmts[k]||T.solvedPayment||0); return {n:k+1,date:d.date,late:false,sat: cumReq>0 ? cumBy(d.date+G)>=r2(cumReq)-0.005 : null}; });
+
+  let prin=+T.principal||0, ui=0, fd=0, credit=0;
+  let last = T.intStart!=null ? T.intStart : T.loanDate;
+  if(last==null) last = L.length ? L[0].date : 0;
+  const tot={accrued:0,intPaid:0,prinPaid:0,feeAssessed:0,feePaid:0,disallowed:0,received:0,credits:0,waivedInt:0,waivedFee:0};
+  const rows=[], F=[];
+  const addF=(sev,date,text,cite,row)=>{ F.push({sev,date,text,cite:cite||''}); if(row) row.flags.push({sev,text}); };
+  let judgDone = !(enforce && E.judg!=null);
+  let paidOff=null, prevVbal=0;
+  let hs={B:prin, span:0, ok:true, fromSys:false}, carried=0, carriedLast=null;
+  const seq={ifp:'ifp',fip:'fip',ipf:'ipf'}[T.order]||'ifp';
+  function applyPay(amt){
+    let rem=r2(amt); const o={i:0,f:0,p:0,over:0};
+    for(const b of seq){ if(rem<=0) break;
+      if(b==='i'){ const x=Math.max(0,Math.min(rem,r2(ui))); ui-=x; o.i=x; rem=r2(rem-x); }
+      else if(b==='f'){ const x=Math.max(0,Math.min(rem,fd)); fd=r2(fd-x); o.f=x; rem=r2(rem-x); }
+      else { const x=Math.max(0,Math.min(rem,prin)); prin=r2(prin-x); o.p=x; rem=r2(rem-x); }
+    }
+    o.over=rem; credit=r2(credit+rem); return o;
+  }
+  function judgmentStep(){
+    const a=accrue(prin,last,E.judg,T,R); ui+=a.interest; tot.accrued+=a.interest; if(E.judg>last) last=E.judg;
+    const owed=r2(prin+r2(ui)+fd); prin = T.judgAmt>0 ? T.judgAmt : owed; ui=0; fd=0; judgDone=true;
+    const row={synthetic:true,t:{},date:E.judg,type:'JDG',amount:prin,days:a.days,rate:a.rateLabel,accrued:a.interest,int:0,fee:0,prin:0,over:0,assessed:null,ui:0,fd:0,bal:prin,total:prin,notes:[`Balance becomes the judgment amount ${money(prin)}`],flags:[]};
+    rows.push(row);
+    addF('note',E.judg,`Judgment ${us(E.judg)}: from then on only court costs, attorney fees, and ${E.judgRate}% interest.`,'§ 6.2-1521; § 6.2-302');
+  }
+  if(enforce && T.rate>36) addF('over',T.loanDate,`Contract rate ${T.rate}% exceeds the 36% maximum; statutory recompute uses 36%.`,'§ 6.2-1520 A');
+
+  for(const t of L){
+    if(!judgDone && t.date>=E.judg) judgmentStep();
+    const a=accrue(prin,last,t.date,T,R);
+    if(t.date>last) last=t.date;
+    ui+=a.interest; tot.accrued+=a.interest;
+    hs.span+=a.span||0; if(a.rateLabel==='mixed') hs.ok=false;
+    const amt=Math.abs(+t.amount||0);
+    const row={t,date:t.date,type:t.type,desc:t.desc,amount:amt,days:a.days,rate:a.rateLabel,accrued:a.interest,int:0,fee:0,prin:0,over:0,assessed:null,notes:[],flags:[],prinB:prin,uiB:ui,fdB:fd};
+    const bar = enforce && FEE_TYPES.has(t.type) ? barReason(t.date,E,t.type,T) : null;
+    const assess=x=>{ x=r2(Math.max(0,x)); fd=r2(fd+x); tot.feeAssessed+=x; row.assessed=x; if(enforce) tot.disallowed+=r2(amt-x); };
+    const revNote = t.revBy ? `Reversed ${us(t.revBy.date)} — treated as never received` : null;
+    switch(t.type){
+      case 'PMT': {
+        if(revNote){ row.notes.push(revNote); row.skip=true; break; }
+        tot.received+=amt; const o=applyPay(amt); row.int=o.i; row.fee=o.f; row.prin=o.p; row.over=o.over;
+        if(o.over>0.004){ row.notes.push(`Overpayment ${money(o.over)}`); if(enforce) addF('verify',t.date,`Payment exceeded the amount owed by ${money(o.over)}; confirm the credit balance was refunded.`,'§ 6.2-1542 A',row); }
+        break; }
+      case 'PRIN': case 'CREDIT': {
+        if(revNote){ row.notes.push(revNote); row.skip=true; break; }
+        tot.received+=amt; if(t.type==='CREDIT') tot.credits+=amt;
+        const x=Math.min(amt,prin); prin=r2(prin-x); row.prin=x; const o=r2(amt-x); row.over=o; credit=r2(credit+o);
+        const carried=r2(ui);
+        row.notes.push(t.type==='PRIN' ? `Principal only; ${money(carried)} accrued interest carried to next payment` : `Applied to principal; ${money(carried)} accrued interest carried`);
+        if(enforce) addF('note',t.date, t.type==='PRIN'
+          ? `Principal-only ${money(amt)}: all to principal, ${money(carried)} accrued interest carried forward. Trace to support (borrower-designated extra payment, rebate, or refund).`
+          : `Credit ${money(amt)} applied to principal. Trace to support (rebate, refund, or adjustment).`,'§ 6.2-1524 F');
+        break; }
+      case 'LATE': {
+        if(!enforce){ assess(amt); break; }
+        const cap=Math.min(20, has(T.lateFee)?T.lateFee:20);
+        let allowed=amt, cite='§ 6.2-1520 B'; const why=[];
+        if(bar){ allowed=0; why.push(`charged ${bar.text}`); cite=bar.cite; }
+        else if(!dues.length || dues[0].sat==null){ addF('verify',t.date,`Late fee ${money(amt)} not tested — enter the first due date and number of payments.`,cite,row); }
+        else {
+          const c=dues.find(d=>!d.late && d.sat===false && t.date>=d.date+G+1);
+          if(c){ c.late=true; row.notes.push(`For installment #${c.n} due ${us(c.date)}`); }
+          else { allowed=0; why.push(`no installment was more than ${G} days past due without already having a late fee (premature or duplicate)`); }
+        }
+        if(allowed>cap){ why.push(`exceeds the ${money(cap)} ${cap<20?'contract':'statutory'} amount`); allowed=cap; }
+        assess(allowed);
+        if(amt-allowed>0.004) addF('over',t.date,`Late fee ${money(amt)}: ${why.join('; ')}. Unsupported ${money(amt-allowed)}.`,cite,row);
+        break; }
+      case 'NSF': {
+        if(!enforce){ assess(amt); break; }
+        const cap=Math.min(25, has(T.nsfFee)?T.nsfFee:25);
+        let allowed=amt, cite='§ 6.2-1523'; const why=[];
+        if(bar){ allowed=0; why.push(`charged ${bar.text}`); cite=bar.cite; }
+        else {
+          if(!L.some(x=>x.type==='REV'&&Math.abs(x.date-t.date)<=15)) addF('verify',t.date,`Returned-check fee ${money(amt)} with no payment reversal within 15 days — confirm a payment was actually returned.`,cite,row);
+          if(allowed>cap){ why.push(`exceeds the ${money(cap)} maximum`); allowed=cap; }
+        }
+        assess(allowed);
+        if(amt-allowed>0.004) addF('over',t.date,`Returned-check fee ${money(amt)}: ${why.join('; ')}. Unsupported ${money(amt-allowed)}.`,cite,row);
+        break; }
+      case 'FEE': {
+        if(!enforce){ assess(amt); break; }
+        if(bar){ assess(0); addF('over',t.date,`Charge ${money(amt)}${t.desc?` ("${t.desc}")`:''} posted ${bar.text}; only interest is permitted then.`,bar.cite,row); }
+        else { assess(amt); addF('verify',t.date,`Charge ${money(amt)}${t.desc?` ("${t.desc}")`:''} — allowed only for recording/filing fees actually paid, insurance premiums actually paid out, or GAP. Confirm support.`,'§ 6.2-1520 D; § 6.2-1523',row); }
+        break; }
+      case 'PROC': {
+        if(!enforce){ assess(amt); break; }
+        const cap=r2(Math.min(150,Math.max(50,0.06*(+T.principal||0))));
+        if(bar){ assess(0); addF('over',t.date,`Processing fee ${money(amt)} posted ${bar.text}.`,bar.cite,row); }
+        else { const allowed=Math.min(amt,cap); assess(allowed); if(amt-allowed>0.004) addF('over',t.date,`Processing fee ${money(amt)} exceeds the ${money(cap)} maximum (greater of $50 or 6% of principal, never over $150). Excess ${money(amt-allowed)}.`,'§ 6.2-1520 C',row); }
+        break; }
+      case 'COST': {
+        if(!enforce){ assess(amt); break; }
+        if(E.judg!=null && t.date>=E.judg){ assess(amt); addF('verify',t.date,`Court costs / attorney fees ${money(amt)} after judgment — confirm they were awarded.`,'§ 6.2-1521',row); }
+        else { assess(0); addF('over',t.date,`Court costs / attorney fees ${money(amt)} charged with no judgment entered — not a permitted charge.`,'§ 6.2-1523',row); }
+        break; }
+      case 'WAIVE_FEE': { const x=Math.min(amt,fd); fd=r2(fd-x); tot.waivedFee+=x; row.notes.push(`Fees waived ${money(x)}`); break; }
+      case 'WAIVE_INT': { const x=Math.min(amt,r2(ui)); ui-=x; tot.waivedInt+=x; row.notes.push(`Interest waived ${money(x)}`); break; }
+      case 'REV': {
+        if(t.revOf) row.notes.push(`Reverses ${money(amt)} ${TYPE_LABEL[t.revOf.type].toLowerCase()} of ${us(t.revOf.date)}`);
+        else { row.notes.push('No matching earlier payment found'); if(enforce) addF('verify',t.date,`Reversal ${money(amt)} has no earlier payment of the same amount.`,'',row); }
+        break; }
+    }
+    row.ui=r2(ui); row.fd=fd; row.bal=prin; row.total=r2(prin+r2(ui)+fd); row.credit=credit;
+    tot.intPaid+=row.int; tot.feePaid+=row.fee; tot.prinPaid+=row.prin;
+    compareRow(row,t,T);
+    if(!enforce && row.v && !opt.quiet){
+      const v=row.v, tol=T.tol+1e-9;
+      const own=['int','prin','fee'].some(k=>has(v[k])&&Math.abs(v[k])>tol);
+      const balJump=has(v.bal)&&Math.abs(v.bal-prevVbal)>tol;
+      if(own||balJump){
+        row.isNew=true;
+        const parts=[]; if(has(v.int)&&Math.abs(v.int)>tol) parts.push(`interest ${signed(v.int)}`); if(has(v.prin)&&Math.abs(v.prin)>tol) parts.push(`principal ${signed(v.prin)}`); if(has(v.fee)&&Math.abs(v.fee)>tol) parts.push(`fees ${signed(v.fee)}`);
+        if(balJump) parts.push(`balance ${signed(v.bal)}${anchor?'':` (change ${signed(v.bal-prevVbal)})`}`);
+        const h=diagnose(row,t,T,hs); row.hint=h;
+        if(!anchor && /^system interest is right/.test(h)){ row.notes.push('Differs only because an earlier difference carried into the balance'); carried++; carriedLast=t.date; }
+        else addF('var',t.date,`${TYPE_LABEL[t.type]} ${money(amt)} — system minus recompute: ${parts.join(', ')}${h?`. Hint: ${h}`:''}${t.inRevWindow?'. Falls between a payment and its reversal; may be timing.':''}`,'',row);
+      }
+      if(has(v.bal)) prevVbal=v.bal;
+    }
+    if(anchor && !row.skip && !t.inRevWindow){
+      if(t.type==='PMT'){
+        const sysPaidPrin = has(t.sysPrin) ? t.sysPrin>0.004 : (has(t.sysInt) && t.sysInt<row.amount-0.005);
+        if(has(t.sysInt)) ui = sysPaidPrin ? 0 : Math.max(0,row.uiB-t.sysInt);
+        if(has(t.sysFee)) fd = (sysPaidPrin && T.order!=='ipf') ? 0 : Math.max(0,r2(row.fdB-t.sysFee));
+      }
+      if(has(t.sysBal)) prin = T.balMeaning==='total' ? r2(t.sysBal-r2(ui)-fd) : t.sysBal;
+      prevVbal=0;
+    }
+    if(!row.skip){
+      if(t.type==='PMT' && (has(t.sysInt) ? (t.sysInt<row.amount-0.005) : r2(ui)<=0.004)){
+        const sb = has(t.sysBal) ? (T.balMeaning==='total' ? null : t.sysBal) : null;
+        hs={B: sb!=null ? sb : prin, span:0, ok:true, fromSys: sb!=null};
+      } else if(t.type==='PRIN'||t.type==='CREDIT'||t.type==='WAIVE_INT') hs.ok=false;
+    }
+    if(paidOff==null && !row.skip && PAY_TYPES.has(t.type) && prin<=0.004 && r2(ui)<=0.004) paidOff=t.date;
+    rows.push(row);
+  }
+
+  if(enforce && schedNote && L.some(t=>t.type==='LATE')) addF('note',L.find(t=>t.type==='LATE').date,schedNote,'§ 6.2-1520 B');
+  if(carried) addF('var',carriedLast,`${carried} later payment row${carried>1?'s differ':' differs'} only because an earlier difference carried into the balance; the system's interest on ${carried>1?'those rows':'that row'} is right for its own prior balance.`,'');
+  let payoff=null;
+  if(T.asOf!=null && T.asOf>=last){
+    if(!judgDone && T.asOf>=E.judg) judgmentStep();
+    const a=accrue(prin,last,T.asOf,T,R);
+    const pi=r2(ui+a.interest);
+    payoff={date:T.asOf,prin,int:pi,fees:fd,total:r2(prin+pi+fd),accrued:a.interest};
+  }
+  if(enforce){
+    const endD = Math.max(last, T.asOf!=null?T.asOf:last);
+    if(E.postMat!=null && endD>=E.postMat) addF('note',E.postMat,`Six months after maturity: from ${us(E.postMat)}, only 6% interest and no other charges.`,'§ 6.2-1522 C');
+    if(E.death!=null && endD>=E.death) addF('note',E.death,`90 days after death: from ${us(E.death)}, only 6% interest on unpaid principal and no other charges.`,'§ 6.2-1522 B');
+    if(E.bk!=null && endD>=E.bk) addF('verify',E.bk,`Bankruptcy: 6% interest from ${us(E.bk)}. Confirm the loan was properly scheduled and no exception applies (co-maker, non-dischargeable debt).`,'§ 6.2-1522 A');
+    if(paidOff!=null && T.loanDate!=null && paidOff-T.loanDate<=30 && T.procFee>0){
+      const reb=r2(T.procFee-Math.min(50,T.procFee));
+      if(reb>0) addF(tot.credits>0?'verify':'over',paidOff,`Paid in full within 30 days of the loan date: processing-fee rebate of ${money(reb)} required${tot.credits>0?'; confirm the credit posted covers it':', and no credit or rebate is posted'}.`,'§ 6.2-1520 C');
+    }
+  }
+  Object.keys(tot).forEach(k=>tot[k]=r2(tot[k]));
+  return {rows,F,tot,end:{prin,ui:r2(ui),fd,credit,last},payoff,E,paidOff};
+}
+
+/* ================= amortization ================= */
+function amortize(T,method,fixedPmt){
+  const n=T.nPay, P=+T.principal, dues=T.dues||[];
+  const start = T.intStart!=null ? T.intStart : T.loanDate;
+  if(!(n>0)||!(P>0)||dues.length!==n||start==null||!(T.rate>=0)) return null;
+  const R={fn:()=>+T.rate, bounds:[]};
+  function sim(pmt){
+    let bal=P, ui=0, prev=start; const rows=[];
+    for(let k=0;k<n;k++){
+      const d=dues[k].date; let int, days=d-prev;
+      if(method==='unit'){ const raw=bal*T.rate/100/12; int = (T.rounding==='trunc'||T.rounding==='perdiemTrunc') ? t2(raw) : (T.rounding==='exact' ? raw : r2(raw)); }
+      else { const a=accrue(bal,prev,d,T,R); int=a.interest; days=a.days; }
+      ui+=int;
+      let pay = k===n-1 ? r2(bal+r2(ui)) : pmt;
+      const ip=Math.min(pay,r2(ui)); ui-=ip;
+      let pp=r2(pay-ip); if(pp>bal){ pp=bal; pay=r2(ip+pp); }
+      bal=r2(bal-pp);
+      rows.push({n:k+1,date:d,days,pay,int:ip,prin:pp,bal,ui:r2(ui)});
+      prev=d;
+    }
+    return rows;
+  }
+  let pmt=fixedPmt, solved=false;
+  if(!(pmt>0)){
+    solved=true;
+    let lo=0, hi=P*(1+T.rate/100*Math.max(1,(dues[n-1].date-start)/365))+1;
+    for(let i=0;i<70;i++){ const mid=(lo+hi)/2; const rs=sim(mid); if(rs[n-1].pay>mid) lo=mid; else hi=mid; }
+    const p0=Math.floor(lo*100)/100; let best=null;
+    for(const c of [p0, r2(p0+0.01)]){ const rs=sim(c); const d=Math.abs(rs[n-1].pay-c); if(!best||d<best.d) best={c,d}; }
+    pmt=best.c;
+  }
+  const rows=sim(pmt);
+  const totInt=r2(rows.reduce((s,r)=>s+r.int,0)), totPay=r2(rows.reduce((s,r)=>s+r.pay,0));
+  return {payment:pmt,solved,rows,totInt,totPay,final:rows[n-1].pay,negAm:rows.some((r,i)=>i<n-1&&r.ui>0.004)};
+}
+
+/* ================= auto-match ================= */
+const LBL={
+  basis:{'365':'365-day year','360':'360-day year','actual':'Actual 365/366'},
+  dayCount:{excl:'Days elapsed',incl:'Inclusive (+1 day)'},
+  rounding:{round:'Round per transaction',trunc:'Truncate per transaction',perdiem:'Per-diem rounded × days',perdiemTrunc:'Per-diem truncated × days',exact:'No rounding'},
+  order:{ifp:'Int → Fees → Prin',fip:'Fees → Int → Prin',ipf:'Int → Prin → Fees'}
+};
+function autoMatch(T,txns){
+  if(!txns.some(t=>[t.sysInt,t.sysPrin,t.sysFee,t.sysBal].some(has))) return null;
+  const base0 = T.intStart!=null ? T.intStart : T.loanDate;
+  const res=[];
+  for(const basis of ['365','360','actual']) for(const dayCount of ['excl','incl']) for(const rounding of ['round','trunc','perdiem','perdiemTrunc','exact']) for(const order of ['ifp','fip','ipf']) for(const off of [0,1]){
+    if(off && base0==null) continue;
+    const T2=Object.assign({},T,{basis,dayCount,rounding,order,compare:'resync',intStart: base0!=null ? base0+off : null});
+    const r=run(T2,txns,false,{quiet:true});
+    let n=0, ok=0, sum=0, first=null;
+    for(const row of r.rows){ if(!row.v) continue; n++; if(!row.bad) ok++; else if(!first) first=row; for(const x of Object.values(row.v)) sum+=Math.abs(x); }
+    const dist=(basis!==T.basis)+(dayCount!==T.dayCount)+(rounding!==T.rounding)+(order!==T.order)+(off?1:0);
+    res.push({basis,dayCount,rounding,order,off,start:base0!=null?base0+off:null,n,ok,sum:r2(sum),first,dist});
+  }
+  res.sort((a,b)=>b.ok-a.ok||a.sum-b.sum||a.dist-b.dist);
+  return res;
+}
+
+/* ================= contract checks ================= */
+function contractChecks(T){
+  const c=[]; const add=(cls,tag,text,cite)=>c.push({cls,tag,text,cite:cite||''});
+  const P=+T.principal;
+  if(P>0) add(P>=300&&P<=35000?'ok':'bad', P>=300&&P<=35000?'OK':'Limit', `Principal ${money(P)} (allowed $300–$35,000)`,'§ 6.2-1520 A');
+  if(T.rate>0) add(T.rate<=36?'ok':'bad', T.rate<=36?'OK':'Limit', `Contract rate ${T.rate}% (max 36%)`,'§ 6.2-1520 A');
+  if(T.nPay>0) add(T.nPay>=6?'ok':'bad', T.nPay>=6?'OK':'Limit', `${T.nPay} payments (at least 6)`,'§ 6.2-1520 A');
+  if(T.loanDate!=null && T.maturityEff!=null){
+    const [y1,m1,d1]=ymd(T.loanDate), [y2,m2,d2]=ymd(T.maturityEff);
+    const mo=(y2-y1)*12+(m2-m1)+(d2-d1)/30.44;
+    add(mo>=5.5&&mo<=120.5?'ok':'bad', mo>=5.5&&mo<=120.5?'OK':'Limit', `Term ≈ ${mo.toFixed(1)} months, maturity ${us(T.maturityEff)} (6–120 months)`,'§ 6.2-1520 A');
+  }
+  if(T.loanDate!=null && T.firstDue!=null){
+    const d=T.firstDue-T.loanDate;
+    add(d>0&&d<=45?'ok':'bad', d>0&&d<=45?'OK':'Check', `First payment period ${d} days (odd first period up to 45 days)`,'§ 6.2-1524 K');
+  }
+  if(P>0){
+    const cap=r2(Math.min(150,Math.max(50,0.06*P)));
+    if(T.procFee>0) add(T.procFee<=cap+0.004?'ok':'bad', T.procFee<=cap+0.004?'OK':'Limit', `Processing fee ${money(T.procFee)} (max ${money(cap)})`,'§ 6.2-1520 C');
+    else add('info','Note',`Maximum processing fee on this loan: ${money(cap)}`,'§ 6.2-1520 C');
+  }
+  add(T.lateFee<=20?'ok':'bad', T.lateFee<=20?'OK':'Limit', `Late fee ${money(T.lateFee)} (max $20)`,'§ 6.2-1520 B');
+  add(T.grace>=10?'ok':'bad', T.grace>=10?'OK':'Limit', `Late fee grace ${T.grace} days (at least 10)`,'§ 6.2-1520 B');
+  add(T.nsfFee<=25?'ok':'bad', T.nsfFee<=25?'OK':'Limit', `Returned-check fee ${money(T.nsfFee)} (max $25)`,'§ 6.2-1523');
+  if(T.levelPayment>0){
+    if(T.payment>0){
+      const diff=Math.abs(T.payment-T.levelPayment);
+      add(diff<=Math.max(1,0.01*T.levelPayment)?'ok':'warn', diff<=Math.max(1,0.01*T.levelPayment)?'OK':'Check', `Scheduled payment ${money(T.payment)}; computed level payment ${money(T.levelPayment)}`,'§ 6.2-1524 K');
+    } else add('info','Note',`Computed level payment ${money(T.levelPayment)} (enter the contract payment to compare)`,'');
+  }
+  if(T.basis==='actual') add('warn','Check','Actual 365/366 basis: the statute allows a day of 1/360 or 1/365 of a year','§ 6.2-1520 A');
+  if(T.dayCount==='incl') add('bad','Check','Inclusive day count charges an extra day each period, more than days elapsed','§ 6.2-1520 A');
+  if(T.loanDate!=null && T.loanDate<dn(2021,1,1)) add('warn','Note','Loan made before 1/1/2021: may be collected under its original terms if lawful when made; current limits may not apply','10VAC5-60-20 K');
+  return c;
+}
+
+/* ================= UI ================= */
+if(typeof document!=='undefined'){
+const $=id=>document.getElementById(id);
+const FIELDS=['loanDate','principal','rate','firstDue','nPay','payment','procFee','lateFee','grace','nsfFee','order','asOf','basis','dayCount','rounding','intStart','balMeaning','compare','tol','maturity','bk','death','judg','judgAmt','judgRate','amMethod'];
+const DEFAULTS={lateFee:'20',grace:'10',nsfFee:'25',order:'ifp',basis:'365',dayCount:'excl',rounding:'round',balMeaning:'prin',compare:'running',tol:'0.01',amMethod:'actual'};
+const S={txns:[],view:'stat',T:null,last:null,amort:null};
+
+function readTerms(){
+  const g=id=>$(id).value;
+  const T={
+    loanDate:parseDate(g('loanDate')), principal:num(g('principal')), rate:num(g('rate')), firstDue:parseDate(g('firstDue')),
+    nPay:parseInt(g('nPay'),10)||0, payment:num(g('payment')), procFee:num(g('procFee')), lateFee:num(g('lateFee')), grace:parseInt(g('grace'),10),
+    nsfFee:num(g('nsfFee')), order:g('order'), asOf:parseDate(g('asOf')), basis:g('basis'), dayCount:g('dayCount'), rounding:g('rounding'),
+    intStart:parseDate(g('intStart')), balMeaning:g('balMeaning'), compare:g('compare'), tol:num(g('tol')),
+    maturity:parseDate(g('maturity')), bk:parseDate(g('bk')), death:parseDate(g('death')), judg:parseDate(g('judg')), judgAmt:num(g('judgAmt')), judgRate:num(g('judgRate'))
+  };
+  if(!has(T.principal)) T.principal=0; if(!has(T.rate)) T.rate=0; if(!has(T.procFee)) T.procFee=0;
+  if(!has(T.lateFee)) T.lateFee=20; if(!has(T.grace)) T.grace=10; if(!has(T.nsfFee)) T.nsfFee=25; if(!has(T.tol)||T.tol<0) T.tol=0.01;
+  return derive(T);
+}
+
+let timer=null;
+function schedule(){ clearTimeout(timer); timer=setTimeout(recalc,180); }
+function recalc(){ const T=readTerms(); S.T=T; renderChecks(T); renderHistory(T); renderAmort(T); }
+
+function renderChecks(T){
+  $('checks').innerHTML=contractChecks(T).map(x=>`<li><span class="tag ${x.cls}">${x.tag}</span><span>${esc(x.text)} <span class="cite">${esc(x.cite)}</span></span></li>`).join('');
+}
+
+/* ---- grid ---- */
+function typeOptions(sel){ return TYPES.map(([k,l])=>`<option value="${k}"${k===sel?' selected':''}>${l}</option>`).join(''); }
+function cellVal(x){ return has(x) ? String(r2(x)) : ''; }
+function renderGrid(){
+  $('rowCount').textContent = S.txns.length ? `(${S.txns.length})` : '';
+  $('gridBody').innerHTML = S.txns.map((t,i)=>`<tr data-i="${i}">
+    <td class="muted">${i+1}</td>
+    <td><input class="d" type="date" data-k="date" value="${iso(t.date)}"></td>
+    <td><select data-k="type" title="${esc(t.desc||'')}">${typeOptions(t.type)}</select></td>
+    <td><input class="m" data-k="amount" inputmode="decimal" value="${cellVal(t.amount)}"></td>
+    <td><input class="m" data-k="sysInt" inputmode="decimal" value="${cellVal(t.sysInt)}"></td>
+    <td><input class="m" data-k="sysPrin" inputmode="decimal" value="${cellVal(t.sysPrin)}"></td>
+    <td><input class="m" data-k="sysFee" inputmode="decimal" value="${cellVal(t.sysFee)}"></td>
+    <td><input class="m" data-k="sysBal" inputmode="decimal" value="${cellVal(t.sysBal)}"></td>
+    <td><button class="x" data-del title="Delete row">✕</button></td></tr>`).join('') || `<tr><td colspan="9" class="muted">No rows yet.</td></tr>`;
+}
+$('gridBody').addEventListener('input',e=>{
+  const el=e.target, tr=el.closest('tr'); if(!tr||!el.dataset.k) return;
+  const t=S.txns[+tr.dataset.i], k=el.dataset.k;
+  if(k==='date') t.date=parseDate(el.value);
+  else if(k==='type'){ t.type=el.value; }
+  else { const v=num(el.value); t[k]= k==='amount' ? (has(v)?Math.abs(v):NaN) : (has(v)?v:null); }
+  schedule();
+});
+$('gridBody').addEventListener('change',e=>{ if(e.target.dataset.k==='type') schedule(); });
+$('gridBody').addEventListener('click',e=>{
+  if(!e.target.hasAttribute('data-del')) return;
+  const i=+e.target.closest('tr').dataset.i; S.txns.splice(i,1); renderGrid(); schedule();
+});
+function loadPaste(append){
+  const {rows,skipped}=parsePaste($('paste').value);
+  if(!rows.length){ $('pasteMsg').textContent='No rows with a date and amount were found.'; return; }
+  S.txns = append ? S.txns.concat(rows) : rows;
+  $('pasteMsg').textContent=`Loaded ${rows.length} row${rows.length>1?'s':''}${skipped?`, skipped ${skipped}`:''}.`;
+  renderGrid(); recalc();
+}
+$('btnReplace').onclick=()=>loadPaste(false);
+$('btnAppend').onclick=()=>loadPaste(true);
+$('btnAdd').onclick=()=>{ const lastD=S.txns.length?S.txns[S.txns.length-1].date:null; S.txns.push({date:lastD,type:'PMT',desc:'',amount:NaN,sysInt:null,sysPrin:null,sysFee:null,sysBal:null}); renderGrid(); };
+
+/* ---- results ---- */
+function sysTotals(P){
+  const s={int:0,prin:0,fee:0,bal:null,hasInt:false,hasPrin:false,hasFee:false,hasBal:false};
+  for(const r of P.rows){ if(r.synthetic) continue; const t=r.t;
+    if(PAY_TYPES.has(r.type) && !r.skip){
+      if(has(t.sysInt)){ s.int+=t.sysInt; s.hasInt=true; }
+      if(has(t.sysPrin)){ s.prin+=t.sysPrin; s.hasPrin=true; }
+      if(has(t.sysFee)){ s.fee+=t.sysFee; s.hasFee=true; }
+    }
+    if(has(t.sysBal) && !r.skip){ s.bal=t.sysBal; s.hasBal=true; }
+  }
+  s.int=r2(s.int); s.prin=r2(s.prin); s.fee=r2(s.fee); return s;
+}
+function renderHistory(T){
+  const box=$('results');
+  const valid=S.txns.filter(t=>t.date!=null && has(t.amount));
+  if(!valid.length){ box.innerHTML='<p class="muted">Add or paste transactions to see results.</p>'; S.last=null; return; }
+  if(!(T.principal>0) || T.loanDate==null){ box.innerHTML='<p class="muted">Enter the contract date and principal amount above.</p>'; S.last=null; return; }
+  const P=run(T,valid,false), St=run(T,valid,true); S.last={P,St,T};
+  const sys=sysTotals(P);
+  const anySys=sys.hasInt||sys.hasPrin||sys.hasFee||sys.hasBal;
+  const sysCollected = sys.hasInt ? r2(sys.int+(sys.hasFee?sys.fee:P.tot.feePaid)) : r2(P.tot.intPaid+P.tot.feePaid);
+  const statCollected = r2(St.tot.intPaid+St.tot.feePaid);
+  const excess = r2(sysCollected-statCollected);
+  const varCount = P.F.filter(f=>f.sev==='var').length;
+  const overCount = St.F.filter(f=>f.sev==='over').length;
+  const balShown = T.balMeaning==='total' ? r2(St.end.prin+St.end.ui+St.end.fd) : St.end.prin;
+  const balPosted = T.balMeaning==='total' ? r2(P.end.prin+P.end.ui+P.end.fd) : P.end.prin;
+  const tol=T.tol;
+
+  let h=`<div class="cards">
+    <div class="card"><div class="k">${T.balMeaning==='total'?'Ending balance (total)':'Ending principal balance'} — statutory</div><div class="v">${money(balShown)}</div><div class="s">${sys.hasBal?`System ${money(sys.bal)} · `:''}As posted ${money(balPosted)}</div></div>
+    <div class="card"><div class="k">Unpaid interest</div><div class="v">${money(St.end.ui)}</div><div class="s">As of ${us(St.end.last)}</div></div>
+    <div class="card"><div class="k">Outstanding fees</div><div class="v">${money(St.end.fd)}</div><div class="s">As posted ${money(P.end.fd)}</div></div>
+    ${St.payoff?`<div class="card"><div class="k">Payoff as of ${us(St.payoff.date)}</div><div class="v">${money(St.payoff.total)}</div><div class="s">Prin ${fmt(St.payoff.prin)} + int ${fmt(St.payoff.int)} + fees ${fmt(St.payoff.fees)}</div></div>`:''}
+    <div class="card ${excess>tol?'alert':'good'}"><div class="k">Excess interest + fees collected</div><div class="v">${money(Math.max(0,excess))}</div><div class="s">${sys.hasInt?'System figures':'As-posted recompute'} vs statutory${excess<-tol?` (statutory is ${money(-excess)} higher)`:''}</div></div>
+    <div class="card ${varCount?'':'good'}"><div class="k">System calculation differences</div><div class="v">${anySys?varCount:'—'}</div><div class="s">${anySys?(varCount?'Rows where a difference first appears':'System figures reproduce'):'No system figures entered'}</div></div>
+  </div>`;
+
+  const rowsSum=[
+    ['Payments received', null, P.tot.received, St.tot.received],
+    ['Interest accrued (earned)', null, P.tot.accrued, St.tot.accrued],
+    ['Interest paid', sys.hasInt?sys.int:null, P.tot.intPaid, St.tot.intPaid],
+    ['Principal paid', sys.hasPrin?sys.prin:null, P.tot.prinPaid, St.tot.prinPaid],
+    ['Fees assessed', null, P.tot.feeAssessed, St.tot.feeAssessed],
+    ['Fees paid', sys.hasFee?sys.fee:null, P.tot.feePaid, St.tot.feePaid],
+    ['Ending principal balance', (sys.hasBal&&T.balMeaning==='prin')?sys.bal:null, P.end.prin, St.end.prin],
+    ['Unpaid interest', null, P.end.ui, St.end.ui],
+    ['Outstanding fees', null, P.end.fd, St.end.fd],
+  ];
+  if(T.balMeaning==='total') rowsSum.push(['Total balance', sys.hasBal?sys.bal:null, r2(P.end.prin+P.end.ui+P.end.fd), r2(St.end.prin+St.end.ui+St.end.fd)]);
+  if(P.payoff) rowsSum.push([`Payoff as of ${us(P.payoff.date)}`, null, P.payoff.total, St.payoff.total]);
+  if(St.tot.disallowed>0) rowsSum.push(['Fees not supported', null, null, St.tot.disallowed]);
+  h+=`<div class="tablewrap" style="max-height:none;margin-bottom:6px"><table><thead><tr><th>Summary</th><th class="n">System</th><th class="n">As posted</th><th class="n">Statutory</th><th class="n">System − statutory</th></tr></thead><tbody>${
+    rowsSum.map(([k,s,p,st])=>{ const d=(has(s)&&has(st))?r2(s-st):null; return `<tr><td>${k}</td><td class="n">${has(s)?fmt(s):'<span class="muted">—</span>'}</td><td class="n">${fmt(p)}</td><td class="n">${fmt(st)}</td><td class="n ${has(d)&&Math.abs(d)>tol?'dv':'dz'}">${has(d)?signed(d):''}</td></tr>`; }).join('')
+  }</tbody></table></div>`;
+  h+=`<p class="muted small-text" style="margin:4px 0 0">As posted = your convention settings, history exactly as posted. Statutory = days elapsed, rate ≤ 36%, unsupported or excess fees removed, post-maturity / death / bankruptcy / judgment rates applied.${(excess>tol && varCount)?' <b>Excess includes calculation differences — run Find matching settings first if the system\'s conventions are unknown.</b>':''}</p>`;
+
+  // findings
+  const all=[...St.F.filter(f=>f.sev!=='var'), ...P.F.filter(f=>f.sev==='var')];
+  const groups=[['over','bad','Potential overcharges'],['var','warn','System calculation differences'],['verify','info','Verify / support needed'],['note','info','Notes']];
+  h+=`<h3>Findings</h3>`;
+  if(!all.length) h+=`<p class="muted small-text">No findings.</p>`;
+  for(const [sev,cls,title] of groups){
+    const fs=all.filter(f=>f.sev===sev).sort((a,b)=>(a.date||0)-(b.date||0)); if(!fs.length) continue;
+    const shown=fs.slice(0,60);
+    h+=`<div class="fgroup"><h3><span class="tag ${cls}">${fs.length}</span>${title}</h3>${sev==='var'?`<p class="muted small-text" style="margin:0 0 4px">Listed only where a difference first appears; later rows inherit it. ${T.compare==='resync'?'Row-by-row mode: each row checked from the system\'s prior balance.':'Tip: switch Compare to Row-by-row to check each row on its own.'}</p>`:''}<ul class="find">${
+      shown.map(f=>`<li><span class="d">${us(f.date)}</span><span>${esc(f.text)} ${f.cite?`<span class="cite">${esc(f.cite)}</span>`:''}</span></li>`).join('')}</ul>${fs.length>shown.length?`<p class="muted small-text">…and ${fs.length-shown.length} more (in the CSV export).</p>`:''}</div>`;
+  }
+
+  // detail table
+  const R = S.view==='posted' ? P : St;
+  const showV = R.rows.some(r=>r.v);
+  h+=`<div class="bar"><h3 style="margin:0">Line detail</h3><div class="btns noprint">
+      <div class="seg" role="group"><button data-view="stat" aria-pressed="${S.view==='stat'}">Statutory limits</button><button data-view="posted" aria-pressed="${S.view==='posted'}">As posted (math check)</button></div>
+      <button id="btnCsv">Export CSV</button><button id="btnPrint">Print</button></div></div>`;
+  const head=['Date','Type','Amount','Days','Rate %','Int accrued','Int paid','Fees paid','Prin paid','Fee assessed','Unpaid int','Fees due','Prin balance'];
+  const vh=showV?['Δ Int','Δ Prin','Δ Fees','Δ Bal']:[];
+  h+=`<div class="tablewrap"><table><thead><tr>${head.map((x,i)=>`<th class="${i>=2?'n':''}">${x}</th>`).join('')}${vh.map(x=>`<th class="n" title="System minus recompute">${x}</th>`).join('')}<th>Notes</th></tr></thead><tbody>`;
+  for(const r of R.rows){
+    const cls=r.synthetic?'syn':(r.skip?'skip':'');
+    const vcell=k=>{ if(!r.v||!has(r.v[k])) return `<td class="n dz"></td>`; const bad=Math.abs(r.v[k])>tol; return `<td class="n ${bad?'dv':'dz'}">${bad?signed(r.v[k]):'✓'}</td>`; };
+    const notes=[...r.flags.map(f=>`<span class="tag ${f.sev==='over'?'bad':f.sev==='var'?'warn':'info'}">${f.sev==='over'?'Over':f.sev==='var'?'Diff':f.sev==='verify'?'Verify':'Note'}</span>`), ...r.notes.map(esc)];
+    if(r.hint && !r.flags.length) notes.push(esc('Hint: '+r.hint));
+    h+=`<tr class="${cls}"><td>${us(r.date)}</td><td>${TYPE_LABEL[r.type]}${r.desc&&r.desc.toUpperCase()!==r.type&&r.desc.toLowerCase()!==String(TYPE_LABEL[r.type]).toLowerCase()?`<span class="sub">${esc(r.desc)}</span>`:''}</td>
+      <td class="n">${fmt(r.amount)}</td><td class="n">${r.days||''}</td><td class="n">${typeof r.rate==='number'?r.rate:(r.rate||'')}</td>
+      <td class="n">${fmt(r.accrued)}</td><td class="n">${r.int?fmt(r.int):''}</td><td class="n">${r.fee?fmt(r.fee):''}</td><td class="n">${r.prin?fmt(r.prin):''}</td>
+      <td class="n">${r.assessed!=null?fmt(r.assessed):''}</td><td class="n">${fmt(r.ui)}</td><td class="n">${fmt(r.fd)}</td><td class="n">${fmt(r.bal)}</td>
+      ${showV?vcell('int')+vcell('prin')+vcell('fee')+vcell('bal'):''}<td class="notes">${notes.join(' ')}</td></tr>`;
+  }
+  h+=`<tr class="tot"><td>Totals</td><td></td><td class="n">${fmt(R.tot.received)}</td><td></td><td></td><td class="n">${fmt(R.tot.accrued)}</td><td class="n">${fmt(R.tot.intPaid)}</td><td class="n">${fmt(R.tot.feePaid)}</td><td class="n">${fmt(R.tot.prinPaid)}</td><td class="n">${fmt(R.tot.feeAssessed)}</td><td class="n">${fmt(R.end.ui)}</td><td class="n">${fmt(R.end.fd)}</td><td class="n">${fmt(R.end.prin)}</td>${showV?'<td></td><td></td><td></td><td></td>':''}<td></td></tr>`;
+  h+=`</tbody></table></div>`;
+  if(R.payoff) h+=`<p class="small-text muted">Payoff ${us(R.payoff.date)}: principal ${money(R.payoff.prin)} + interest ${money(R.payoff.int)} (${money(R.payoff.accrued)} accrued since ${us(R.end.last)}) + fees ${money(R.payoff.fees)} = <b>${money(R.payoff.total)}</b></p>`;
+  box.innerHTML=h;
+  box.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{ S.view=b.dataset.view; renderHistory(S.T); });
+  $('btnCsv').onclick=exportCsv; $('btnPrint').onclick=()=>window.print();
+}
+
+/* ---- auto-match UI ---- */
+$('btnMatch').onclick=()=>{
+  const out=$('matchOut'); const T=readTerms();
+  const valid=S.txns.filter(t=>t.date!=null&&has(t.amount));
+  if(!valid.length||!(T.principal>0)||T.loanDate==null){ out.innerHTML='<p class="muted small-text">Enter the loan terms and transactions first.</p>'; return; }
+  const res=autoMatch(T,valid);
+  if(!res){ out.innerHTML='<p class="muted small-text">No system figures to match against — paste the system\'s interest, principal, or balance columns.</p>'; return; }
+  const best=res[0]; const seen=new Set(); const top=[];
+  for(const r of res){ const key=`${r.ok}|${r.sum}`; if(seen.has(key)&&top.length) continue; seen.add(key); top.push(r); if(top.length>=5) break; }
+  const desc=r=>`${LBL.basis[r.basis]}, ${LBL.dayCount[r.dayCount].toLowerCase()}, ${LBL.rounding[r.rounding].toLowerCase()}, ${LBL.order[r.order]}${r.off?`, interest from ${us(r.start)}`:''}`;
+  let h='';
+  if(best.ok===best.n) h+=`<div class="note-box">All ${best.n} rows with system figures match using: <b>${esc(desc(best))}</b>.</div>`;
+  else h+=`<div class="note-box warnbox">Best match: ${best.ok} of ${best.n} rows using <b>${esc(desc(best))}</b>. ${best.first?`First row that still differs: <b>${us(best.first.date)}</b> ${TYPE_LABEL[best.first.type]} ${money(best.first.amount)} — likely a data difference (missing or misdated transaction, fee, or adjustment) rather than a setting.`:''}</div>`;
+  if(best.dayCount==='incl') h+=`<div class="note-box warnbox">The system appears to count an extra day each period. Interest beyond days elapsed is a potential overcharge (§ 6.2-1520 A); the statutory recompute uses days elapsed.</div>`;
+  h+=`<div class="tablewrap" style="max-height:none;margin-top:8px"><table><thead><tr><th class="n">Rows matched</th><th>Day basis</th><th>Day count</th><th>Rounding</th><th>Application</th><th>Interest start</th><th class="n">Total |Δ|</th><th></th></tr></thead><tbody>${
+    top.map((r,i)=>`<tr><td class="n">${r.ok}/${r.n}</td><td>${LBL.basis[r.basis]}</td><td>${LBL.dayCount[r.dayCount]}</td><td>${LBL.rounding[r.rounding]}</td><td>${LBL.order[r.order]}</td><td>${r.start!=null?us(r.start):''}</td><td class="n">${fmt(r.sum)}</td><td><button class="small ${i===0?'primary':''}" data-apply="${i}">Apply</button></td></tr>`).join('')
+  }</tbody></table></div><p class="muted small-text">Ties are broken toward your current settings. Rows that differ under every combination point to the data, not the math.</p>`;
+  out.innerHTML=h;
+  out.querySelectorAll('[data-apply]').forEach(b=>b.onclick=()=>{
+    const r=top[+b.dataset.apply];
+    $('basis').value=r.basis; $('dayCount').value=r.dayCount; $('rounding').value=r.rounding; $('order').value=r.order;
+    if(r.off) $('intStart').value=iso(r.start);
+    b.textContent='Applied'; recalc();
+  });
+};
+
+/* ---- amortization UI ---- */
+function renderAmort(T){
+  const box=$('amortOut'); const method=$('amMethod').value;
+  const a=amortize(T,method,T.payment>0?T.payment:null); S.amort=a;
+  if(!a){ box.innerHTML='<p class="muted">Enter the contract date, principal, rate, first payment due date, and number of payments.</p>'; return; }
+  const n=a.rows.length;
+  let h=`<div class="cards">
+    <div class="card"><div class="k">${a.solved?'Computed level payment':'Scheduled payment'}</div><div class="v">${money(a.payment)}</div><div class="s">${n} payments, first ${us(a.rows[0].date)}</div></div>
+    <div class="card"><div class="k">Final payment</div><div class="v">${money(a.final)}</div><div class="s">Due ${us(a.rows[n-1].date)}</div></div>
+    <div class="card"><div class="k">Total interest</div><div class="v">${money(a.totInt)}</div><div class="s">${LBL.basis[T.basis]}, ${LBL.rounding[T.rounding].toLowerCase()}</div></div>
+    <div class="card"><div class="k">Total of payments</div><div class="v">${money(a.totPay)}</div><div class="s">Principal ${money(T.principal)}</div></div>
+  </div>`;
+  if(method==='unit') h+=`<div class="note-box warnbox">Equal-period interest ignores the actual number of days, which § 6.2-1520 A requires. Use it only to see whether a lender's schedule was built this way.</div>`;
+  if(a.negAm) h+=`<div class="note-box warnbox">The payment doesn't cover interest in some periods; unpaid interest carries forward (it is not added to principal).</div>`;
+  if(Math.abs(a.final-a.payment)>Math.max(5,0.1*a.payment)) h+=`<div class="note-box warnbox">The final payment differs noticeably from the regular payment — check the scheduled payment amount.</div>`;
+  h+=`<div class="note-box">Balance is principal only. Each payment pays the interest accrued since the last due date first, and the rest reduces principal, so the balance only goes down. Days are actual days between due dates${T.dayCount==='incl'?' plus one (inclusive count)':''}.</div>`;
+  const showUi=a.rows.some(r=>r.ui>0.004);
+  h+=`<div class="tablewrap"><table><thead><tr><th class="n">#</th><th>Due date</th><th class="n">Days</th><th class="n">Payment</th><th class="n">Interest</th><th class="n">Principal</th><th class="n">Balance</th>${showUi?'<th class="n">Unpaid int</th>':''}</tr></thead><tbody>
+    <tr class="syn"><td></td><td>${us(T.intStart!=null?T.intStart:T.loanDate)}</td><td></td><td></td><td></td><td></td><td class="n">${fmt(T.principal)}</td>${showUi?'<td></td>':''}</tr>
+    ${a.rows.map(r=>`<tr><td class="n">${r.n}</td><td>${us(r.date)}</td><td class="n">${r.days}</td><td class="n">${fmt(r.pay)}</td><td class="n">${fmt(r.int)}</td><td class="n">${fmt(r.prin)}</td><td class="n">${fmt(r.bal)}</td>${showUi?`<td class="n">${fmt(r.ui)}</td>`:''}</tr>`).join('')}
+    <tr class="tot"><td></td><td>Totals</td><td></td><td class="n">${fmt(a.totPay)}</td><td class="n">${fmt(a.totInt)}</td><td class="n">${fmt(r2(a.totPay-a.totInt))}</td><td></td>${showUi?'<td></td>':''}</tr>
+  </tbody></table></div>`;
+  box.innerHTML=h;
+}
+$('amMethod').addEventListener('change',()=>renderAmort(readTerms()));
+$('btnAmToHist').onclick=()=>{
+  const a=S.amort; if(!a) return;
+  if(S.txns.length && !confirm('Replace the current transactions with this schedule (as on-time payments)?')) return;
+  S.txns=a.rows.map(r=>({date:r.date,type:'PMT',desc:'',amount:r.pay,sysInt:null,sysPrin:null,sysFee:null,sysBal:null}));
+  renderGrid(); showTab('history'); recalc();
+};
+$('btnAmCsv').onclick=()=>{
+  const a=S.amort; if(!a) return;
+  const lines=[['#','Due date','Days','Payment','Interest','Principal','Balance','Unpaid interest'].join(',')]
+    .concat(a.rows.map(r=>[r.n,us(r.date),r.days,r.pay.toFixed(2),r.int.toFixed(2),r.prin.toFixed(2),r.bal.toFixed(2),r.ui.toFixed(2)].join(',')));
+  download('amortization-schedule.csv',lines.join('\n'),'text/csv');
+};
+$('btnAmCheck').onclick=()=>{ showTab('history'); $('paste').focus(); $('paste').placeholder='Paste the lender\'s schedule here, with headers if possible:\nDate	Payment	Interest	Principal	Balance\nThen click Load pasted rows. Each row is treated as a payment on that date and the system figures are compared.'; };
+
+/* ---- export / save ---- */
+function csvCell(x){ const s=String(x==null?'':x); return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
+function exportCsv(){
+  if(!S.last) return; const {P,St}=S.last; const R=S.view==='posted'?P:St;
+  const head=['Date','Type','Description','Amount','Days','Rate','Interest accrued','Interest paid','Fees paid','Principal paid','Fee assessed','Unpaid interest','Fees due','Principal balance','Sys interest','Sys principal','Sys fees','Sys balance','D interest','D principal','D fees','D balance','Notes'];
+  const L=[`View,${S.view==='posted'?'As posted':'Statutory limits'}`, head.join(',')];
+  const f2=x=>has(x)?r2(x).toFixed(2):'';
+  for(const r of R.rows){ const t=r.t||{}, v=r.v||{};
+    L.push([us(r.date),TYPE_LABEL[r.type],r.desc||'',f2(r.amount),r.days||'',typeof r.rate==='number'?r.rate:(r.rate||''),f2(r.accrued),f2(r.int),f2(r.fee),f2(r.prin),f2(r.assessed),f2(r.ui),f2(r.fd),f2(r.bal),f2(t.sysInt),f2(t.sysPrin),f2(t.sysFee),f2(t.sysBal),f2(v.int),f2(v.prin),f2(v.fee),f2(v.bal),[...r.flags.map(x=>x.text),...r.notes].join(' | ')].map(csvCell).join(','));
+  }
+  L.push('','Findings','Severity,Date,Finding,Cite');
+  const sevName={over:'Potential overcharge',var:'System difference',verify:'Verify',note:'Note'};
+  [...St.F.filter(f=>f.sev!=='var'),...P.F.filter(f=>f.sev==='var')].forEach(f=>L.push([sevName[f.sev],us(f.date),f.text,f.cite].map(csvCell).join(',')));
+  download('loan-review.csv',L.join('\n'),'text/csv');
+}
+function download(name,text,type){ const b=new Blob([text],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800); }
+$('btnSave').onclick=()=>{
+  const data={app:'va-cf-exam-calc',v:1,fields:Object.fromEntries(FIELDS.map(id=>[id,$(id).value])),txns:S.txns.map(t=>Object.assign({},t,{date:iso(t.date)}))};
+  download('loan-review-case.json',JSON.stringify(data,null,1),'application/json');
+};
+$('btnLoad').onclick=()=>$('fileCase').click();
+$('fileCase').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return; const fr=new FileReader();
+  fr.onload=()=>{ try{ const d=JSON.parse(fr.result); FIELDS.forEach(id=>{ if(d.fields&&id in d.fields) $(id).value=d.fields[id]; });
+      S.txns=(d.txns||[]).map(t=>Object.assign({},t,{date:parseDate(t.date),amount:has(num(t.amount))?num(t.amount):NaN})); renderGrid(); recalc(); }
+    catch(err){ alert('That file could not be read as a saved case.'); } };
+  fr.readAsText(f); e.target.value='';
+};
+function setFields(vals){ FIELDS.forEach(id=>{ $(id).value = id in vals ? vals[id] : (DEFAULTS[id]||''); }); }
+$('btnReset').onclick=()=>{ if(!confirm('Clear all loan terms and transactions?')) return; setFields({}); S.txns=[]; $('paste').value=''; $('pasteMsg').textContent=''; $('matchOut').innerHTML=''; renderGrid(); recalc(); };
+$('btnExample').onclick=()=>{
+  if((S.txns.length||$('principal').value) && !confirm('Replace the current case with the example?')) return;
+  setFields({loanDate:'2025-01-15',principal:'2000',rate:'35.99',firstDue:'2025-02-15',nPay:'12',procFee:'120',asOf:'2025-10-06'});
+  const T=readTerms(); const p=T.solvedPayment;
+  const tx=[['2025-02-14','PMT',p,'Payment'],['2025-03-14','PMT',p,'Payment'],['2025-04-28','LATE',20,'Late Charge'],['2025-04-30','PMT',p,'Payment'],['2025-05-12','LATE',20,'Late Charge'],['2025-05-15','PMT',p,'Payment'],['2025-06-13','PMT',p,'Payment'],['2025-06-20','PRIN',150,'Principal Only'],['2025-07-15','PMT',p,'Payment'],['2025-08-15','PMT',p,'Payment'],['2025-08-21','REV',p,'NSF Reversal'],['2025-08-21','NSF',30,'NSF Fee'],['2025-08-27','LATE',20,'Late Charge'],['2025-08-29','PMT',p,'Payment'],['2025-09-15','PMT',p,'Payment']];
+  S.txns=tx.map(([d,ty,a,desc])=>({date:parseDate(d),type:ty,desc,amount:a,sysInt:null,sysPrin:null,sysFee:null,sysBal:null}));
+  const sim=run(Object.assign({},T,{basis:'360',compare:'running'}),S.txns,false);
+  for(const r of sim.rows){ if(r.synthetic||r.skip) continue; const t=S.txns[r.t.i];
+    if(PAY_TYPES.has(t.type)){ t.sysInt=r.int; t.sysPrin=r.prin; t.sysFee=r.fee; }
+    t.sysBal=r.bal; }
+  $('matchOut').innerHTML='<div class="note-box">Example loaded. The "system" figures were built on a 360-day year while the settings say 365, so every row differs a little. Click <b>Find matching settings</b> to see it identified. The history also has a premature late fee and an over-limit returned-check fee.</div>';
+  renderGrid(); showTab('history'); recalc();
+};
+
+/* ---- tabs & wiring ---- */
+function showTab(name){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===name)));
+  ['history','amort','rules'].forEach(n=>$('tab-'+n).hidden = n!==name);
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.querySelectorAll('#termsPanel input, #termsPanel select').forEach(el=>{ el.addEventListener('input',schedule); el.addEventListener('change',schedule); });
+renderGrid(); recalc();
+}
+</script>
+</body>
+</html>
