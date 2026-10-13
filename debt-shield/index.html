@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Debt Shield — Check a Debt Settlement Company</title>
+  <meta name="description" content="Check a debt settlement company for potential violations of Virginia and federal law, look up its reputation, and test whether your settlement and fees add up.">
+  <meta property="og:title" content="Debt Shield — Know before you settle">
+  <meta property="og:description" content="Free tools for Virginians: screen a debt settlement company against Va. Code Ch. 20.1 and the FTC Telemarketing Sales Rule, and check your settled amount against the original debt.">
+  <meta name="theme-color" content="#0e2236">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 8 13v17c0 15 10 26 24 30 14-4 24-15 24-30V13z' fill='%230e2236'/%3E%3Cpath d='m21 32 8 8 15-16' fill='none' stroke='%2337c2a4' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <a class="brand" href="#top" aria-label="Debt Shield home">
+        <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4 8 13v17c0 15 10 26 24 30 14-4 24-15 24-30V13z"/><path class="brand__check" d="m21 32 8 8 15-16"/></svg>
+        <span class="brand__name">Debt Shield</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#company">Check a company</a>
+        <a href="#settlement">Check a settlement</a>
+        <a href="#rights">Your rights</a>
+        <a href="#report">Report</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 13.1A9 9 0 1 1 10.9 3a7 7 0 0 0 10.1 10.1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="top">
+      <div class="wrap hero__inner">
+        <div class="hero__copy">
+          <p class="eyebrow">For Virginia consumers · Federal &amp; Virginia law</p>
+          <h1>Know before you settle.</h1>
+          <p class="lede">Debt settlement can cut what you owe — or quietly cost you more than it saves. Debt Shield screens a company against the rules it has to follow and checks whether your settlement actually adds up.</p>
+          <div class="hero__ctas">
+            <a class="btn btn--primary" href="#company">Check a company</a>
+            <a class="btn btn--ghost" href="#settlement">Check my settlement</a>
+          </div>
+        </div>
+        <ul class="hero__facts" aria-label="Key rules at a glance">
+          <li><strong>$0</strong><span>in fees before a debt is settled <em>and</em> you've made a payment on it</span><cite>16 CFR 310.4(a)(5)(i) · Va. Code § 6.2-2040</cite></li>
+          <li><strong>20%</strong><span>of enrolled debt — or 30% of the savings — is the most a Virginia licensee may charge</span><cite>Va. Code § 6.2-2041</cite></li>
+          <li><strong>7</strong><span>business days, at most, to get your savings back if you quit — it's your money, in an insured account you own</span><cite>16 CFR 310.4(a)(5)(ii)</cite></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== COMPANY CHECK ===== -->
+    <section class="section" id="company" aria-labelledby="companyTitle">
+      <div class="wrap">
+        <header class="section__head">
+          <p class="eyebrow">Tool 1</p>
+          <h2 id="companyTitle">Check a debt settlement company</h2>
+          <p>Answer what you know about the company. Each answer is matched against Virginia and federal rules, and you get a list of potential violations with the law behind each one. Answer "Not sure" when you don't know — that becomes something to ask the company.</p>
+        </header>
+
+        <div class="card company-name">
+          <label for="companyName" class="label">Company name</label>
+          <div class="company-name__row">
+            <input id="companyName" type="text" autocomplete="organization" placeholder="e.g. Example Debt Relief LLC" spellcheck="false">
+          </div>
+          <p class="hint">Used to build the reputation lookups below and your complaint summary. Nothing you type leaves your browser.</p>
+        </div>
+
+        <div class="card lookups" aria-labelledby="lookupsTitle">
+          <div class="lookups__head">
+            <h3 id="lookupsTitle">Step 1 · Look up its reputation</h3>
+            <p class="hint">Each link opens an official database searched for the company name. Note what you find — your answers below carry it into the score.</p>
+          </div>
+          <ol class="lookups__grid" id="lookups"></ol>
+        </div>
+
+        <form class="card quiz" id="quiz" aria-labelledby="quizTitle" novalidate>
+          <div class="quiz__head">
+            <h3 id="quizTitle">Step 2 · What has the company done?</h3>
+            <div class="quiz__progress" aria-live="polite"><span id="quizCount">0</span> of <span id="quizTotal">0</span> answered</div>
+          </div>
+          <div id="quizGroups"></div>
+          <div class="quiz__actions">
+            <button type="button" class="btn btn--ghost" id="quizReset">Clear answers</button>
+          </div>
+        </form>
+
+        <section class="card result" id="companyResult" aria-live="polite" aria-labelledby="resultTitle">
+          <div class="result__summary">
+            <div class="gauge" id="gauge" role="img" aria-label="Risk score">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="gauge__track" cx="60" cy="60" r="50"/>
+                <circle class="gauge__fill" id="gaugeFill" cx="60" cy="60" r="50" pathLength="100"/>
+              </svg>
+              <div class="gauge__value"><span id="gaugeScore">—</span><small>Shield score</small></div>
+            </div>
+            <div class="result__text">
+              <p class="eyebrow" id="resultCompany">Your result</p>
+              <h3 id="resultTitle">Answer a few questions to see a result</h3>
+              <p id="resultBlurb" class="muted">The score starts at 100. Each potential violation takes off more than a red flag; each "Not sure" takes off a little until you confirm it.</p>
+              <div class="tally" id="tally"></div>
+            </div>
+          </div>
+          <div class="findings" id="findings"></div>
+          <div class="result__actions">
+            <a class="btn btn--primary" href="#report" id="toReport">Turn this into a complaint</a>
+            <button type="button" class="btn btn--ghost" data-print>Print or save as PDF</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===== SETTLEMENT CHECK ===== -->
+    <section class="section section--alt" id="settlement" aria-labelledby="settleTitle">
+      <div class="wrap">
+        <header class="section__head">
+          <p class="eyebrow">Tool 2</p>
+          <h2 id="settleTitle">Check a settlement: settled amount vs. original debt</h2>
+          <p>Enter each settled debt. Debt Shield checks the fee against Virginia's cap and the federal rules for how a fee may be calculated and when it may be collected, then shows what you really saved after fees and estimated taxes.</p>
+        </header>
+
+        <form class="card settle" id="settleForm" novalidate>
+          <fieldset class="settle__terms">
+            <legend>How does your contract calculate the company's fee?</legend>
+            <div class="seg" role="radiogroup" aria-label="Fee basis">
+              <label><input type="radio" name="feeBasis" value="enrolled" checked><span>% of enrolled debt</span></label>
+              <label><input type="radio" name="feeBasis" value="savings"><span>% of amount saved</span></label>
+              <label><input type="radio" name="feeBasis" value="unknown"><span>Not sure</span></label>
+            </div>
+            <div class="field field--inline" id="feeRateField">
+              <label for="feeRate">Fee rate in contract</label>
+              <div class="input-affix"><input id="feeRate" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="20"><span>%</span></div>
+            </div>
+          </fieldset>
+
+          <div class="debts" role="group" aria-labelledby="debtsLabel">
+            <div class="debts__head">
+              <h3 id="debtsLabel">Settled debts</h3>
+              <div class="debts__btns">
+                <button type="button" class="btn btn--small" id="loadExample">Load an example</button>
+                <button type="button" class="btn btn--small" id="addDebt">+ Add debt</button>
+              </div>
+            </div>
+            <div class="debts__cols" aria-hidden="true">
+              <span>Creditor</span><span>Owed when enrolled</span><span>Owed when settled</span><span>Settled for</span><span>Fee charged</span><span>When was the fee first charged?</span><span></span>
+            </div>
+            <div id="debtRows"></div>
+            <p class="hint">"Owed when settled" is optional — interest and late fees usually grow the balance while you save. Leave "Fee charged" blank to calculate it from your contract rate.</p>
+          </div>
+
+          <details class="settle__more" open>
+            <summary>Other costs &amp; taxes</summary>
+            <div class="settle__grid">
+              <div class="field">
+                <label for="otherFees">Other fees paid <em>to the company</em></label>
+                <div class="input-affix input-affix--pre"><span>$</span><input id="otherFees" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+                <p class="hint">Enrollment, setup, monthly "service" or admin fees.</p>
+              </div>
+              <div class="field">
+                <label for="acctFees">Dedicated account fees</label>
+                <div class="input-affix input-affix--pre"><span>$</span><input id="acctFees" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+                <p class="hint">Charged by the bank or account administrator holding your savings.</p>
+              </div>
+              <div class="field">
+                <label for="fedRate">Federal tax bracket</label>
+                <select id="fedRate">
+                  <option value="0">0% / not sure</option>
+                  <option value="10">10%</option>
+                  <option value="12" selected>12%</option>
+                  <option value="22">22%</option>
+                  <option value="24">24%</option>
+                  <option value="32">32%</option>
+                  <option value="35">35%</option>
+                  <option value="37">37%</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="vaRate">Virginia income tax rate</label>
+                <div class="input-affix"><input id="vaRate" type="number" inputmode="decimal" min="0" max="10" step="0.25" value="5.75"><span>%</span></div>
+                <p class="hint">Virginia's top bracket (over $17,000 of taxable income) is 5.75%.</p>
+              </div>
+              <label class="check">
+                <input type="checkbox" id="insolvent">
+                <span>I was insolvent (debts exceeded assets) when the debt was forgiven <small>— forgiven debt may be excluded up to the amount of insolvency (IRS Form 982)</small></span>
+              </label>
+            </div>
+          </details>
+        </form>
+
+        <section class="settle-out" id="settleOut" aria-live="polite" aria-labelledby="settleOutTitle">
+          <h3 class="visually-hidden" id="settleOutTitle">Settlement results</h3>
+          <div class="kpis" id="kpis"></div>
+          <figure class="card breakdown">
+            <figcaption>
+              <strong>Where your original debt went</strong>
+              <span class="muted" id="breakdownSub"></span>
+            </figcaption>
+            <div class="stack" id="stack" role="img"></div>
+            <ul class="legend" id="legend"></ul>
+            <div class="tip" id="tip" role="tooltip" hidden></div>
+          </figure>
+          <div class="card">
+            <h4 class="card__title">Fee and timing checks</h4>
+            <div class="findings findings--compact" id="settleFindings"></div>
+          </div>
+          <div class="card table-card">
+            <h4 class="card__title">Debt-by-debt detail</h4>
+            <div class="table-scroll">
+              <table class="detail" id="detailTable"></table>
+            </div>
+          </div>
+          <div class="result__actions">
+            <button type="button" class="btn btn--ghost" data-print="settle">Print or save as PDF</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===== RIGHTS ===== -->
+    <section class="section" id="rights" aria-labelledby="rightsTitle">
+      <div class="wrap">
+        <header class="section__head">
+          <p class="eyebrow">The rules</p>
+          <h2 id="rightsTitle">Your rights under Virginia and federal law</h2>
+          <p>Debt settlement companies serving Virginians answer to both. Where the rules overlap, the company has to meet the stricter one.</p>
+        </header>
+
+        <div class="rights">
+          <article class="card rights__col">
+            <h3><span class="badge badge--va">VA</span> Virginia</h3>
+            <details open>
+              <summary>A license from the State Corporation Commission</summary>
+              <p>Anyone providing debt settlement services to Virginia residents must be licensed by the SCC's Bureau of Financial Institutions — even with no office in Virginia. The license requires a surety bond of $25,000 to $350,000, annual reports, and examinations.</p>
+              <p class="muted">Exempt: banks, savings institutions, credit unions, and attorneys licensed to practice law in Virginia. Nonprofit credit counseling agencies that run debt management plans are licensed separately under Chapter 20.</p>
+              <cite>Va. Code §§ 6.2-2027, 6.2-2029, 6.2-2035 · 10VAC5-230</cite>
+            </details>
+            <details>
+              <summary>A fee cap — and nothing else on top</summary>
+              <p>A licensee may charge a total fee of <strong>either</strong></p>
+              <ul>
+                <li>no more than <strong>20% of the principal</strong> of the debt you enrolled, <strong>or</strong></li>
+                <li>no more than <strong>30% of the difference</strong> between what you owed when the debt was settled and what you pay to satisfy it.</li>
+              </ul>
+              <p>With several debts in one agreement, the 20% fee is earned debt by debt, in proportion to each debt's share of the total. The company may not charge or receive <strong>any other fee</strong> from you for debt settlement services.</p>
+              <cite>Va. Code § 6.2-2041(A)–(C)</cite>
+            </details>
+            <details>
+              <summary>No fee until a debt is actually settled</summary>
+              <p>A licensee may not request or receive payment until it has settled, reduced, or otherwise changed the terms of at least one of your debts under an agreement you signed — mirroring the federal advance-fee ban.</p>
+              <cite>Va. Code § 6.2-2040</cite>
+            </details>
+            <details>
+              <summary>A written agreement you can walk away from</summary>
+              <p>You must get a signed, dated written agreement, and a duplicate original once both sides sign. It must state that you can end the arrangement at any time, for any reason, and explain how disputes are resolved. Your funds must be held at an FDIC-insured institution, and the company cannot make you sign a power of attorney to enroll.</p>
+              <cite>Va. Code § 6.2-2040</cite>
+            </details>
+            <details>
+              <summary>Honest advertising</summary>
+              <p>False, misleading, or deceptive advertising is prohibited, and SCC regulations add rules on how licensees advertise and on referral arrangements with affiliates.</p>
+              <cite>Va. Code § 6.2-2042 · 10VAC5-230</cite>
+            </details>
+            <details>
+              <summary>What you can do if the rules are broken</summary>
+              <p>A violation of Chapter 20.1 is a prohibited practice under the <strong>Virginia Consumer Protection Act</strong>. You may sue for actual damages or $500, whichever is greater — up to three times actual damages or $1,000 if the violation was willful — plus reasonable attorney fees. The SCC can also issue cease-and-desist orders, impose civil penalties, and revoke licenses.</p>
+              <cite>Va. Code §§ 59.1-200, 59.1-204 · Chapter 20.1</cite>
+            </details>
+            <details>
+              <summary>Time limits on old debts</summary>
+              <p>Virginia generally gives creditors 5 years to sue on a written contract and 3 years on an unwritten one, from the date of breach. A debt past that window may still be collected but can't be won in court — worth knowing before you pay to settle it. Get legal advice: payments and written acknowledgments can affect the clock.</p>
+              <cite>Va. Code § 8.01-246</cite>
+            </details>
+          </article>
+
+          <article class="card rights__col">
+            <h3><span class="badge badge--us">US</span> Federal</h3>
+            <details open>
+              <summary>The advance-fee ban</summary>
+              <p>A debt relief company that sells by phone may not request or receive any fee until <strong>(1)</strong> it has settled or changed the terms of at least one debt, <strong>(2)</strong> you have signed that settlement, and <strong>(3)</strong> you have made at least one payment under it. Each fee must be either proportional to that debt's share of your total enrolled debt, or a fixed percentage of the amount saved — measured from the balance <em>when you enrolled</em>.</p>
+              <p class="muted">This covers calls you make in response to ads, not just cold calls. In-person sales are exempt, which is one reason Virginia's own rule matters.</p>
+              <cite>Telemarketing Sales Rule, 16 CFR 310.4(a)(5)(i), 310.6(b)(5)–(6)</cite>
+            </details>
+            <details>
+              <summary>Your dedicated savings account</summary>
+              <p>The company may ask you to save in a dedicated account only if: it's at an insured financial institution; you own the funds and any interest; the account administrator is not owned by, controlled by, or affiliated with the company; the company pays and takes no referral money from the administrator; and you can withdraw at any time without penalty, getting your money (minus fees already earned) within <strong>7 business days</strong>.</p>
+              <cite>16 CFR 310.4(a)(5)(ii)</cite>
+            </details>
+            <details>
+              <summary>What they must tell you before you enroll</summary>
+              <ul>
+                <li>How long it will take to get results, and when they'll make a settlement offer to each creditor.</li>
+                <li>How much you must save before they make each offer.</li>
+                <li>That if you stop paying creditors, your credit may suffer, you may be sent to collections or sued, and fees and interest may grow what you owe.</li>
+                <li>That you own the money in your account and can withdraw it at any time.</li>
+                <li>The total cost of the service.</li>
+              </ul>
+              <cite>16 CFR 310.3(a)(1)(i), (viii)</cite>
+            </details>
+            <details>
+              <summary>No misleading promises</summary>
+              <p>It's illegal to misrepresent how much you'll save, how long it will take, how much you must save before offers are made, the effect on collection calls or lawsuits, the share of customers who get the advertised results, or whether the company is a nonprofit.</p>
+              <cite>16 CFR 310.3(a)(2)(x) · FTC Act § 5, 15 U.S.C. 45 · CFPA, 12 U.S.C. 5531, 5536</cite>
+            </details>
+            <details>
+              <summary>Credit repair promises bring extra rules</summary>
+              <p>If a company says it will improve your credit report or score, the Credit Repair Organizations Act may also apply: no payment before services are fully performed, a written contract with required disclosures, and a 3-business-day right to cancel.</p>
+              <cite>15 U.S.C. 1679b, 1679d, 1679e</cite>
+            </details>
+            <details>
+              <summary>Forgiven debt can be taxable</summary>
+              <p>Debt a creditor forgives is generally taxable income. Creditors that cancel $600 or more must send you Form 1099-C. You may exclude it to the extent you were insolvent right before the cancellation (Form 982, IRS Publication 4681). Virginia starts from federal adjusted gross income, so the same amount usually flows into your state return.</p>
+              <cite>26 U.S.C. 61(a)(11), 108, 6050P</cite>
+            </details>
+            <details>
+              <summary>Collectors still have to follow the rules</summary>
+              <p>While you're in a program, third-party debt collectors are still bound by the Fair Debt Collection Practices Act: no harassment, no false threats, and you can dispute a debt in writing and ask them to stop contacting you.</p>
+              <cite>15 U.S.C. 1692 et seq. · Regulation F, 12 CFR 1006</cite>
+            </details>
+          </article>
+        </div>
+
+        <aside class="callout">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 21h20L12 2zm0 6 .01 0M12 9v5m0 3v.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p><strong>Before you enroll, compare alternatives.</strong> A nonprofit credit counseling agency can set up a debt management plan that usually keeps your accounts current, and a Virginia consumer or bankruptcy attorney can tell you whether bankruptcy or a statute-of-limitations defense fits better. Settlement typically requires you to stop paying creditors, which damages credit and invites lawsuits.</p>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===== REPORT ===== -->
+    <section class="section section--alt" id="report" aria-labelledby="reportTitle">
+      <div class="wrap">
+        <header class="section__head">
+          <p class="eyebrow">Take action</p>
+          <h2 id="reportTitle">Report a company</h2>
+          <p>Debt Shield writes a summary from your answers and settlement numbers. Review it, add your own story, and paste it into a complaint with any of these agencies.</p>
+        </header>
+
+        <div class="report">
+          <div class="card report__draft">
+            <label class="label" for="complaint">Your complaint summary</label>
+            <textarea id="complaint" rows="16" spellcheck="true"></textarea>
+            <div class="report__actions">
+              <button type="button" class="btn btn--primary" id="copyComplaint">Copy text</button>
+              <button type="button" class="btn btn--ghost" id="regenComplaint">Rebuild from my answers</button>
+              <span class="copied" id="copied" role="status"></span>
+            </div>
+          </div>
+          <ul class="agencies">
+            <li class="card agency">
+              <h3>Virginia State Corporation Commission</h3>
+              <p class="agency__role">Bureau of Financial Institutions — licenses and examines debt settlement providers.</p>
+              <p><a href="tel:+18043719657">(804) 371-9657</a></p>
+              <a class="btn btn--small" href="https://www.scc.virginia.gov/" target="_blank" rel="noopener">scc.virginia.gov ↗</a>
+            </li>
+            <li class="card agency">
+              <h3>Virginia Attorney General</h3>
+              <p class="agency__role">Consumer Protection Section — enforces the Virginia Consumer Protection Act.</p>
+              <p><a href="tel:+18045529963">1-800-552-9963</a></p>
+              <a class="btn btn--small" href="https://www.oag.state.va.us/consumer-protection/" target="_blank" rel="noopener">oag.state.va.us ↗</a>
+            </li>
+            <li class="card agency">
+              <h3>Consumer Financial Protection Bureau</h3>
+              <p class="agency__role">Federal complaints about debt settlement and debt collection; companies must respond.</p>
+              <p><a href="tel:+18554112372">(855) 411-2372</a></p>
+              <a class="btn btn--small" href="https://www.consumerfinance.gov/complaint/" target="_blank" rel="noopener">Submit a complaint ↗</a>
+            </li>
+            <li class="card agency">
+              <h3>Federal Trade Commission</h3>
+              <p class="agency__role">Enforces the Telemarketing Sales Rule's advance-fee ban.</p>
+              <p><a href="tel:+18773824357">1-877-382-4357</a></p>
+              <a class="btn btn--small" href="https://reportfraud.ftc.gov/" target="_blank" rel="noopener">ReportFraud.ftc.gov ↗</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FAQ ===== -->
+    <section class="section" id="faq" aria-labelledby="faqTitle">
+      <div class="wrap wrap--narrow">
+        <h2 id="faqTitle">Questions</h2>
+        <details class="faq">
+          <summary>Is a "Shield score" a legal finding?</summary>
+          <p>No. It's a screening tool built from your answers. It points to rules that may have been broken so you know what to ask about and where to report. Only a regulator or a court can decide that a law was violated.</p>
+        </details>
+        <details class="faq">
+          <summary>The company says it's run by attorneys. Does Virginia's law still apply?</summary>
+          <p>Virginia's Chapter 20.1 exempts persons licensed to practice law <em>in Virginia</em>. A firm with out-of-state lawyers, or a sales company that refers you to an attorney network, may not qualify — ask which Virginia-licensed attorney is handling your file. The federal Telemarketing Sales Rule can still apply to attorney-affiliated programs that sell by phone.</p>
+        </details>
+        <details class="faq">
+          <summary>Why does the settlement check use two different "savings" numbers?</summary>
+          <p>The federal rule measures savings from what you owed <em>when you enrolled</em>. Virginia's 30% option measures from what you owed <em>when the debt was settled</em>, which is often higher after interest and late fees. Debt Shield checks both; the real savings figure always compares against your enrolled balance, because that's what you would have paid if you'd never joined.</p>
+        </details>
+        <details class="faq">
+          <summary>Does Debt Shield store or send my information?</summary>
+          <p>No. Everything runs in your browser. Your answers are saved only in this browser so you can come back to them; use "Clear answers" to remove them.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <div>
+        <p class="brand brand--footer"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4 8 13v17c0 15 10 26 24 30 14-4 24-15 24-30V13z"/><path class="brand__check" d="m21 32 8 8 15-16"/></svg> Debt Shield</p>
+        <p class="footer__note">Debt Shield is an independent educational tool, not a law firm or government agency, and nothing here is legal or tax advice. Laws summarized as of October 2026 — confirm current text at <a href="https://law.lis.virginia.gov/vacode/title6.2/chapter20.1/" target="_blank" rel="noopener">law.lis.virginia.gov</a> and <a href="https://www.ecfr.gov/current/title-16/chapter-I/subchapter-C/part-310" target="_blank" rel="noopener">ecfr.gov</a>, and talk with a Virginia attorney about your situation.</p>
+      </div>
+      <nav class="footer__links" aria-label="Footer">
+        <a href="#company">Check a company</a>
+        <a href="#settlement">Check a settlement</a>
+        <a href="#rights">Your rights</a>
+        <a href="#report">Report</a>
+        <a href="#faq">Questions</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
