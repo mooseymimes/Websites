@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,12 @@
   <meta name="description" content="The official 2028 presidential campaign of God. He floated down. He is not happy. He is not asking.">
   <meta property="og:title" content="GOD 2028 — He's Seen Enough">
   <meta property="og:description" content="Creator of Heaven, Earth, and the Weekend. Running for President, because apparently He has to do everything Himself.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="GOD 2028 — He's Seen Enough">
+  <meta name="twitter:description" content="Creator of Heaven, Earth, and the Weekend. Running for President, because apparently He has to do everything Himself.">
   <meta name="theme-color" content="#0c0c10">
+  <script>document.documentElement.className = 'js';</script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6 L60 56 L4 56 Z' fill='%23f0c25a'/%3E%3Cellipse cx='32' cy='40' rx='13' ry='8' fill='%23111'/%3E%3Ccircle cx='32' cy='40' r='5' fill='%23f0c25a'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,6 +58,11 @@
       <span class="smite__count" id="smiteCount">4,081</span>
       <span class="smite__latest" id="smiteLatest">latest: a robocall, Tulsa</span>
     </div>
+    <div class="altimeter__controls">
+      <button class="ctl" type="button" id="soundBtn" aria-pressed="false" title="Thunder sound">THUNDER: OFF</button>
+      <button class="ctl ctl--jump" type="button" id="jumpBtn" aria-expanded="false" aria-controls="jumpList">SECTIONS</button>
+    </div>
+    <ol class="jump" id="jumpList" hidden></ol>
   </nav>
 
   <main id="main">
@@ -117,6 +127,7 @@
         <h2 class="hero__name"><span class="hero__god">GOD</span><span class="hero__year">2028</span></h2>
         <p class="hero__tag">HE'S SEEN <span class="rage">ENOUGH.</span></p>
         <p class="hero__sub">Creator of Heaven, Earth, and the Weekend. Running for President of the United States, because apparently He has to do everything Himself.</p>
+        <p class="countdown" id="countdown" hidden><b id="countdownDays">—</b> <span id="countdownText">days until Judgment (Election) Day · Nov. 7, 2028 · He has it circled.</span></p>
         <div class="hero__cta">
           <a class="btn btn--holy" href="#confession">THOU SHALT VOLUNTEER</a>
           <a class="btn btn--ghost" href="#tithe">TITHE NOW</a>
@@ -162,22 +173,24 @@
       <h2 class="wrath-title">The Ten Planks</h2>
       <p class="wrath-sub">He tried ten before. People got creative with them. These are simpler.</p>
       <div class="tablets">
-        <ol class="tablet" start="1">
+        <div class="tablet"><ol start="1">
           <li><b>Thou shalt not put a fee on a fee.</b> A fee is a fee. That is the whole idea of a fee.</li>
           <li><b>Thou shalt fix the potholes.</b> He can see every one of them from up there. He has a list. It is long.</li>
           <li><b>Thou shalt not price-gouge.</b> He invented abundance. It is very easy. Try it.</li>
           <li><b>Thou shalt take the weekend off.</b> He made it for you. Keep it holy, or at least keep it.</li>
           <li><b>Thou shalt not hoard.</b> Seven yachts is coveting with a receipt.</li>
-          <svg class="tablet__crack" viewBox="0 0 100 400" aria-hidden="true"><path d="M8 0 L14 40 L6 70 L18 120 L11 150"/></svg>
         </ol>
-        <ol class="tablet tablet--two" start="6">
+          <svg class="tablet__crack" viewBox="0 0 100 400" aria-hidden="true"><path d="M8 0 L14 40 L6 70 L18 120 L11 150"/></svg>
+        </div>
+        <div class="tablet tablet--two"><ol start="6">
           <li><b>Thou shalt not shrink the airplane seat.</b> It is done shrinking. He has spoken.</li>
           <li><b>Thou shalt follow up on thy thoughts and prayers.</b> He gets them. He reads them. Now do the thing.</li>
           <li><b>Thou shalt not say “synergy,” “circle back,” or “quick sync” in His presence.</b> The quick sync is never quick.</li>
           <li><b>Thou shalt make the customer service line reach a person.</b> A real one. In under forty days and forty nights.</li>
           <li><b>Thou shalt not ignore the check-engine light.</b> It is a light. He made light. It means something.</li>
-          <svg class="tablet__crack tablet__crack--two" viewBox="0 0 100 400" aria-hidden="true"><path d="M92 400 L84 350 L95 320 L80 270 L88 240"/></svg>
         </ol>
+          <svg class="tablet__crack tablet__crack--two" viewBox="0 0 100 400" aria-hidden="true"><path d="M92 400 L84 350 L95 320 L80 270 L88 240"/></svg>
+        </div>
       </div>
       <p class="footnote">Additional planks available upon request. He has more. He has <em>so many</em> more.</p>
     </section>
@@ -214,6 +227,23 @@
       </ul>
     </section>
 
+    <!-- ===== 4,000 FT — QUESTIONS ===== -->
+    <section class="zone zone--faq" id="questions" data-alt="4000" data-name="Questions" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 4,000 ft &nbsp;·&nbsp; Frequently asked &nbsp;·&nbsp; He has heard all of them</p>
+      <h2 class="wrath-title">You Have Questions.</h2>
+      <p class="wrath-sub">He knows. He heard them before you thought of them.</p>
+      <div class="faq">
+        <details class="faq__item"><summary>Is He constitutionally eligible?</summary><p>The Constitution requires a candidate to be at least thirty-five. He is older than thirty-five. He is older than “older.” As for residency, counsel describes it as “omnipresent, including all fifty states and the territories you keep forgetting about.”</p></details>
+        <details class="faq__item"><summary>Which party is He running with?</summary><p>None. He has been claimed by all of them. He would like that to stop.</p></details>
+        <details class="faq__item"><summary>Who is His running mate?</summary><p>Under review. The short list is a dove, a whale, and a very tired accountant from Dayton who has never once put a fee on a fee.</p></details>
+        <details class="faq__item"><summary>Will He debate?</summary><p>Yes. He has already heard the other side's answers. He heard them before they were written. He was not impressed then, either.</p></details>
+        <details class="faq__item"><summary>What about the separation of church and state?</summary><p>He is in favor. He is neither one. Kindly keep your church out of His campaign.</p></details>
+        <details class="faq__item"><summary>Will He respect term limits?</summary><p>Two terms. He has agreed to this. He would like some credit for agreeing to this.</p></details>
+        <details class="faq__item"><summary>Does He take questions?</summary><p>He takes all of them. Constantly. From everyone. At once. That is rather the problem.</p></details>
+        <details class="faq__item"><summary>How do I reach the campaign?</summary><p>You already have. See the <a href="#prayer">Prayer Line</a>, below. Everything is below. He is working His way down.</p></details>
+      </div>
+    </section>
+
     <!-- ===== 3,000 FT — THE TOUR ===== -->
     <section class="zone zone--tour" id="tour" data-alt="3000" data-name="The Tour" data-zone="wrath">
       <p class="eyebrow eyebrow--light">Altitude: 3,000 ft &nbsp;·&nbsp; The Descension Tour &nbsp;·&nbsp; Dates not subject to change. Ever.</p>
@@ -227,6 +257,26 @@
         <li class="poster poster--e"><span class="poster__kind">LISTENING SESSION</span><span class="poster__where">EVERYWHERE</span><span class="poster__when">Always. He is already listening.</span></li>
         <li class="poster poster--f"><span class="poster__kind">FUNDRAISER</span><span class="poster__where">THE TEMPLE</span><span class="poster__when">Tables will not be flipped. This time.</span></li>
       </ul>
+    </section>
+
+    <!-- ===== 2,200 FT — PRAYER LINE ===== -->
+    <section class="zone zone--prayer" id="prayer" data-alt="2200" data-name="Prayer Line" data-zone="wrath">
+      <p class="eyebrow eyebrow--light">Altitude: 2,200 ft &nbsp;·&nbsp; Constituent services &nbsp;·&nbsp; Current wait: none. He is very fast.</p>
+      <h2 class="wrath-title">The Prayer Line</h2>
+      <p class="wrath-sub">Submit a prayer. Receive a ruling. Rulings are final, and also eternal.</p>
+      <form class="prayer" id="prayerForm" novalidate>
+        <label class="field" for="prayerInput"><span>Your prayer <small>(not about parking)</small></span></label>
+        <div class="prayer__row">
+          <input type="text" id="prayerInput" name="prayer" maxlength="140" autocomplete="off" placeholder="Dear Candidate…">
+          <button class="btn btn--holy" type="submit">SEND UP</button>
+        </div>
+        <div class="ruling" id="ruling" role="status" aria-live="polite" hidden>
+          <span class="ruling__stamp" id="rulingStamp"></span>
+          <p class="ruling__text" id="rulingText"></p>
+          <p class="ruling__ref" id="rulingRef"></p>
+        </div>
+        <p class="fine">Prayers typed here stay in your browser. He does not need the page to send them anywhere.</p>
+      </form>
     </section>
 
     <!-- ===== 1,500 FT — CONFESSION ===== -->
@@ -286,7 +336,7 @@
       <p class="earth__line">You have reached Earth. So has He.</p>
       <p class="earth__paid">Paid for by <b>Him</b>. Not authorized by any candidate's committee, because He is the committee.</p>
       <nav class="earth__links" aria-label="Footer">
-        <a href="#planks">Platform</a><a href="#forecast">Plagues</a><a href="#tour">Tour</a><a href="#tithe">Tithe</a><a href="#heaven" id="ascend">Ascend ↑</a>
+        <a href="#planks">Platform</a><a href="#forecast">Plagues</a><a href="#questions">Questions</a><a href="#tour">Tour</a><a href="#prayer">Pray</a><a href="#tithe">Tithe</a><button type="button" id="shareBtn">Spread the Word</button><a href="#heaven" id="ascend">Ascend ↑</a>
       </nav>
       <p class="earth__privacy">Privacy policy: He sees everything. This page sets no cookies. This is mostly for you.</p>
       <p class="earth__parody">This is a work of satire. To the best of our knowledge, God has not filed with the Federal Election Commission. If He has, we were not consulted, which is on brand.</p>

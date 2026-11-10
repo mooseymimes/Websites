@@ -188,11 +188,10 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
 .zone { position: relative; min-height: 100vh; padding: clamp(4rem, 10vh, 8rem) clamp(1.2rem, 6vw, 6rem); display: flex; flex-direction: column; justify-content: center; }
 .zone::before {
   /* vertical altitude label bleeding up the left edge */
-  content: attr(data-alt) " FT — " attr(data-name);
+  content: attr(data-label);
   position: absolute; left: 10px; top: 50%; transform: rotate(-90deg) translateX(-50%); transform-origin: left top;
   font-family: var(--font-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; opacity: .45; white-space: nowrap;
 }
-.zone--heaven::before { content: "∞ FT — HEAVEN"; }
 
 .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; margin: 0 0 1.5rem; opacity: .75; }
 .eyebrow--light { color: var(--ivory); }
@@ -282,14 +281,14 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
 /* ---------- shared wrath-zone headings ---------- */
 .wrath-title { font-family: var(--font-shout); font-size: clamp(2.6rem, 7vw, 6.5rem); line-height: .9; text-transform: uppercase; margin: 0 0 .5rem; color: var(--ivory); letter-spacing: .01em; transform: rotate(-1deg); transform-origin: left; }
 .wrath-sub { font-family: var(--font-calm); font-style: italic; font-size: clamp(1.15rem, 2vw, 1.6rem); color: var(--ivory); opacity: .85; margin: 0 0 2.5rem; }
-.zone--planks, .zone--forecast, .zone--endorse, .zone--tour, .zone--confession, .zone--tithe { color: var(--ivory); }
+.zone--planks, .zone--forecast, .zone--endorse, .zone--faq, .zone--tour, .zone--prayer, .zone--confession, .zone--tithe { color: var(--ivory); }
 .footnote { font-family: var(--font-mono); font-size: 12px; opacity: .65; margin-top: 2.5rem; letter-spacing: .05em; }
 .fine { font-family: var(--font-mono); font-size: 11px; opacity: .6; margin: 1rem 0 0; }
 
 /* ---------- 12,000 The Planks ---------- */
 .tablets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(1.5rem, 4vw, 4rem); max-width: 1100px; align-items: start; }
 .tablet {
-  position: relative; margin: 0; padding: 3.2rem 2rem 2.4rem 3.6rem; list-style: upper-roman;
+  position: relative; margin: 0; padding: 3.2rem 2rem 2.4rem 3.6rem;
   color: #2a241b; font-family: var(--font-holy); font-size: clamp(.92rem, 1.15vw, 1.05rem); line-height: 1.45;
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05' numOctaves='4' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .1  0 0 0 0 .08  0 0 0 0 .05  0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
@@ -298,6 +297,7 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
   box-shadow: inset 0 0 0 6px rgba(255,255,255,.15), inset 0 -18px 30px rgba(0,0,0,.18), 0 30px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.5);
   transform: rotate(-1.5deg);
 }
+.tablet ol { margin: 0; padding: 0; list-style: upper-roman; }
 .tablet--two { transform: rotate(1.2deg) translateY(1.5rem); }
 .tablet li { margin: 0 0 1.1rem; padding-left: .3rem; text-shadow: 0 1px 0 rgba(255,255,255,.55), 0 -1px 0 rgba(0,0,0,.35); }
 .tablet li::marker { font-family: var(--font-holy); font-weight: 900; color: var(--gold-deep); }
@@ -397,13 +397,51 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
 .earth__line { font-family: var(--font-calm); font-style: italic; font-size: clamp(1.3rem, 2.4vw, 2rem); margin: 0 0 2rem; }
 .earth__paid { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; max-width: 60ch; opacity: .85; }
 .earth__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem 2rem; margin: 1.5rem 0; font-family: var(--font-shout); letter-spacing: .12em; font-size: 1.1rem; }
-.earth__links a { color: var(--gold); text-decoration: none; border-bottom: 2px solid transparent; }
-.earth__links a:hover { border-color: var(--gold); }
+.earth__links a, .earth__links button { color: var(--gold); text-decoration: none; border: 0; border-bottom: 2px solid transparent; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: none; cursor: pointer; }
+.earth__links a:hover, .earth__links button:hover { border-color: var(--gold); }
 .earth__privacy, .earth__parody { font-family: var(--font-mono); font-size: 11px; max-width: 70ch; opacity: .55; line-height: 1.6; }
 .earth__alt { font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; margin-top: 3rem; color: var(--ember); }
 
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); z-index: 70; max-width: min(90vw, 460px); padding: .8rem 1.2rem; background: var(--ink); color: var(--ivory); font-family: var(--font-sharpie); font-size: 1.05rem; border: 2px solid var(--gold); box-shadow: 0 20px 40px rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Altimeter controls (thunder toggle, mobile section menu) ---------- */
+.altimeter__controls { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
+.ctl { font: 700 8px/1.2 var(--font-mono); letter-spacing: .12em; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 3px; padding: 6px 2px; cursor: pointer; opacity: .75; transition: opacity .2s, background .2s, color .2s; }
+.ctl:hover, .ctl:focus-visible { opacity: 1; }
+.ctl[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--ink); opacity: 1; }
+.ctl--jump { display: none; }
+.jump { display: none; }
+
+/* ---------- Election countdown ---------- */
+.countdown { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 2rem; padding: .7em 1.1em; border: 1px dashed rgba(240,194,90,.55); max-width: 60ch; }
+.countdown b { font-family: var(--font-shout); font-size: 1.9em; font-weight: 400; color: var(--gold); letter-spacing: .04em; vertical-align: -.12em; margin-right: .25em; font-variant-numeric: tabular-nums; }
+
+/* ---------- 4,000 Questions ---------- */
+.faq { max-width: 860px; border-top: 1px solid rgba(243,233,207,.25); }
+.faq__item { border-bottom: 1px solid rgba(243,233,207,.25); }
+.faq__item summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; padding: 1.1rem 0; font-family: var(--font-holy); font-weight: 700; font-size: clamp(1.05rem, 1.8vw, 1.4rem); letter-spacing: .02em; transition: color .2s; }
+.faq__item summary::-webkit-details-marker { display: none; }
+.faq__item summary::after { content: "+"; flex: none; font-family: var(--font-shout); font-size: 1.5em; line-height: .8; color: var(--gold); transition: transform .25s; }
+.faq__item[open] summary::after { transform: rotate(45deg); color: var(--ember); }
+.faq__item summary:hover, .faq__item[open] summary { color: var(--gold); }
+.faq__item p { margin: 0 0 1.3rem; max-width: 62ch; font-size: clamp(1.08rem, 1.5vw, 1.3rem); opacity: .9; }
+.faq__item a { color: var(--gold); }
+
+/* ---------- 2,200 Prayer Line ---------- */
+.prayer { max-width: 720px; display: grid; gap: 1rem; }
+.prayer__row { display: flex; gap: .8rem; flex-wrap: wrap; }
+.prayer__row input { flex: 1 1 260px; min-width: 0; padding: .9rem 1rem; font: 1.15rem var(--font-calm); color: var(--ivory); background: rgba(0,0,0,.45); border: 1px solid rgba(243,233,207,.3); border-bottom: 2px solid var(--gold); border-radius: 3px; }
+.prayer__row input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,194,90,.25); }
+.ruling { position: relative; background: #f5edd6; color: var(--ink); padding: 1.5rem 1.5rem 1.1rem; box-shadow: 0 18px 30px rgba(0,0,0,.55); transform: rotate(-.8deg); }
+.ruling.is-new { animation: ruling .35s cubic-bezier(.2,1.5,.4,1); }
+@keyframes ruling { from { transform: rotate(-3deg) scale(1.08); opacity: 0; } to { transform: rotate(-.8deg); opacity: 1; } }
+.ruling__stamp { display: inline-block; font-family: var(--font-shout); font-size: 1.5rem; letter-spacing: .1em; line-height: 1; color: var(--blood); border: 4px solid currentColor; padding: .15em .5em; transform: rotate(-4deg); margin-bottom: .8rem; }
+.ruling[data-kind="granted"] .ruling__stamp { color: #2f6b3a; }
+.ruling[data-kind="pending"] .ruling__stamp { color: var(--gold-deep); }
+.ruling[data-kind="heard"] .ruling__stamp { color: var(--slate); }
+.ruling__text { margin: 0 0 .6rem; font-size: clamp(1.15rem, 1.8vw, 1.45rem); font-style: italic; line-height: 1.35; }
+.ruling__ref { margin: 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .6; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
@@ -415,7 +453,17 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
   .altimeter__rail, .altimeter__label { display: none; }
   .altimeter__readout { display: flex; align-items: baseline; gap: .4rem; }
   .altimeter__value { font-size: 18px; margin: 0; }
-  .altimeter__wrath { width: 30%; }
+  .altimeter { gap: 12px; }
+  .altimeter__wrath { flex: 1; min-width: 40px; max-width: 30%; }
+  .altimeter__controls { flex-direction: row; width: auto; margin: 0; }
+  .ctl { font-size: 9px; padding: 9px 8px; }
+  .ctl--jump { display: block; }
+  .jump:not([hidden]) { display: block; position: absolute; left: 0; right: 0; bottom: 100%; margin: 0; padding: 6px 0; list-style: none; max-height: calc(100vh - 80px); overflow-y: auto; background: rgba(12,12,16,.97); border-top: 2px solid var(--gold); box-shadow: 0 -20px 40px rgba(0,0,0,.6); }
+  .jump a { display: flex; justify-content: space-between; gap: 1rem; padding: 11px 16px; color: var(--ivory); text-decoration: none; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .jump a b { color: var(--gold); font-weight: 700; }
+  .jump li.is-active a { background: rgba(240,194,90,.14); }
+  .prayer__row .btn { flex: 1 1 100%; }
+  .toast { bottom: 76px; width: max-content; }
   .altimeter__wrath .altimeter__label { display: block; text-align: left; }
   .altimeter__smite { margin: 0; text-align: right; }
   .smite__count { font-size: 14px; }
@@ -441,3 +489,8 @@ main { position: relative; z-index: 1; padding-right: var(--rail); }
   .sky__flicker, .sky__embers::after { display: none; }
   .the-turn__word, .rant__line, .impact { opacity: 1; transform: none; }
 }
+
+/* ---------- Without JavaScript, nothing stays hidden ---------- */
+.no-js .the-turn__word, .no-js .rant__line, .no-js .impact { opacity: 1; transform: none; }
+.no-js .crack path { stroke-dashoffset: 0; }
+.no-js .altimeter__controls { display: none; }
