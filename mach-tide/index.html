@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Mach Tide — Arcade Jet Shooter</title>
+  <meta name="description" content="A small 3D arcade jet shooter over open ocean. Steer with the mouse, hold to fire, launch homing missiles.">
+  <meta name="theme-color" content="#0a3a6b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a3a6b'/%3E%3Cpath d='M32 8 L38 34 L58 48 L38 46 L32 56 L26 46 L6 48 L26 34 Z' fill='%23e8eef5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="hud" hidden>
+    <div class="hud-block top-left">
+      <span class="label">Score</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="hud-block top-right">
+      <span class="label">Best</span>
+      <span class="value" id="best">0</span>
+    </div>
+    <div class="hud-block bottom-left">
+      <span class="label">Hull</span>
+      <div class="bar"><div id="hull"></div></div>
+    </div>
+    <div class="hud-block bottom-right">
+      <span class="label">Missiles</span>
+      <div id="missiles" class="pips"></div>
+    </div>
+  </div>
+
+  <div id="flash"></div>
+
+  <div id="overlay">
+    <div class="panel">
+      <h1>MACH TIDE</h1>
+      <p id="message" class="message">Enemy squadrons inbound over open water.</p>
+      <ul class="controls">
+        <li><b>Move mouse</b> — steer</li>
+        <li><b>Hold left button</b> — cannon</li>
+        <li><b>Right click / Space</b> — homing missile (when locked)</li>
+        <li><b>M</b> — mute</li>
+      </ul>
+      <button id="start" type="button">Launch</button>
+    </div>
+  </div>
+
+  <script src="vendor/three.bundle.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
