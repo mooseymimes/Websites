@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>High Meadow — Rolling Hills in 3D</title>
+  <meta name="description" content="A real-time grassy, hilly landscape: hundreds of thousands of wind-blown blades of grass, groves of trees, drifting cloud shadows and a procedural sky, all in the browser.">
+  <meta property="og:title" content="High Meadow — Rolling Hills in 3D">
+  <meta property="og:description" content="Wander a procedural meadow: wind-blown grass, wildflowers, groves, cloud shadows and a sky you can set from dawn to dusk.">
+  <meta name="theme-color" content="#0b140c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2389b8e8'/%3E%3Ccircle cx='46' cy='18' r='7' fill='%23ffe08a'/%3E%3Cpath d='M0 46c12-16 24-16 34-4 8-10 18-10 30 0v22H0z' fill='%234f9a3a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#panel">Skip to controls</a>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__mark">High Meadow</div>
+    <div class="loader__bar"><span></span></div>
+    <div class="loader__note" id="loaderNote">Raising the hills…</div>
+  </div>
+
+  <canvas id="scene" role="img" aria-label="Interactive 3D landscape of grassy rolling hills. Drag to look around, use W A S D to walk, scroll to rise and descend."></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="brand">
+    <p class="brand__eyebrow">Grass · hills · weather</p>
+    <h1 class="brand__title">High Meadow</h1>
+    <p class="brand__sub">Drag to look around. Walk with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, scroll to rise above the hills.</p>
+  </header>
+
+  <button class="panel-toggle" id="panelToggle" type="button" aria-controls="panel" aria-expanded="false">Controls</button>
+
+  <aside class="panel" id="panel" aria-label="Landscape controls">
+    <section class="panel__section">
+      <h2 class="panel__heading">Light</h2>
+      <label class="range" for="time"><span>Time of day <em id="timeValue">18:30</em></span>
+        <input type="range" id="time" min="5" max="20" value="18.5" step="0.05">
+      </label>
+      <label class="range" for="clouds"><span>Cloud cover <em id="cloudsValue">40%</em></span>
+        <input type="range" id="clouds" min="0" max="100" value="40" step="1">
+      </label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Wind</h2>
+      <label class="range" for="wind"><span>Strength <em id="windValue">breeze</em></span>
+        <input type="range" id="wind" min="0" max="100" value="45" step="1">
+      </label>
+      <label class="range" for="windDir"><span>Direction <em id="windDirValue">from the W</em></span>
+        <input type="range" id="windDir" min="0" max="359" value="270" step="1">
+      </label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">View</h2>
+      <div class="chips" role="group" aria-label="Viewpoint">
+        <button class="chip" type="button" data-view="meadow">Meadow</button>
+        <button class="chip" type="button" data-view="low">In the grass</button>
+        <button class="chip" type="button" data-view="hilltop">Hilltop</button>
+        <button class="chip" type="button" data-view="aerial">Aerial</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="drift" checked><span class="toggle__track"></span>Wander on its own</label>
+      <label class="toggle"><input type="checkbox" id="bloom" checked><span class="toggle__track"></span>Bloom</label>
+    </section>
+
+    <section class="panel__section">
+      <h2 class="panel__heading">Detail <span class="panel__count"><b id="bladeValue">0</b> blades</span></h2>
+      <div class="chips" role="group" aria-label="Grass detail">
+        <button class="chip" type="button" data-quality="low">Low</button>
+        <button class="chip" type="button" data-quality="medium">Medium</button>
+        <button class="chip" type="button" data-quality="high">High</button>
+        <button class="chip" type="button" data-quality="ultra">Ultra</button>
+      </div>
+    </section>
+  </aside>
+
+  <footer class="hint" aria-hidden="true">
+    <span><b>Drag</b> look</span><span><b>WASD</b> walk</span><span><b>Shift</b> run</span><span><b>Scroll</b> altitude</span><span><b>G</b> wander</span><span><b>1–4</b> views</span>
+  </footer>
+  <div class="stats" aria-hidden="true"><b id="fpsValue">0</b> fps</div>
+  <p class="fail" id="fail" hidden>This page needs WebGL 2, which this browser or device does not provide.</p>
+
+  <script src="vendor/three.bundle.min.js"></script>
+  <script src="atmosphere.js"></script>
+  <script src="terrain.js"></script>
+  <script src="grass.js"></script>
+  <script src="trees.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
